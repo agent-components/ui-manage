@@ -1,0 +1,48 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* vue-stream-markdown CSS omitted — AI markdown UI not shipped in ui-manage */
+@import './theme/markdown/markdown.css';
+
+@import './theme/tokens.css';
+
+/*
+ * The interface size is the root font size: every interface size is in rem, so this one value
+ * scales panels, text, and controls, while the canvas keeps drawing in screen pixels. A share of
+ * 100% keeps the browser's own default font size as the starting point.
+ */
+html[data-interface-scale='110'] {
+  font-size: 110%;
+}
+html[data-interface-scale='125'] {
+  font-size: 125%;
+}
+html[data-interface-scale='150'] {
+  font-size: 150%;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  color: var(--color-surface);
+  background: var(--color-canvas);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  display: none;
+}

@@ -1,0 +1,167 @@
+<script setup lang="ts">
+import { isEqual } from 'es-toolkit'
+import { computed } from 'vue'
+
+import { type Locale, useI18n } from '@open-pencil/vue/i18n'
+
+import { recoveryEnabled, setRecoveryEnabled } from '@/app/document/recovery/preferences'
+import { isUiManageEmbed } from '@/app/integrations/ui-manage/mode'
+import {
+  appPreferences,
+  DEFAULT_APP_PREFERENCES,
+  INTERFACE_SCALES,
+  updateAccentPreference
+} from '@/app/settings/preferences/store'
+import { DEFAULT_THEME } from '@/app/settings/theme'
+import { DEFAULT_ACCENT } from '@/app/shell/accent/palette'
+import { interfaceScalePreference } from '@/app/shell/interface-scale'
+import { animationPreference } from '@/app/shell/motion'
+import { useAppTheme } from '@/app/shell/theme'
+import CredentialSettingsSection from '@/components/settings/credentials/CredentialSettingsSection.vue'
+import AccentColorPicker from '@/components/settings/general/AccentColorPicker.vue'
+import CollaborationNameSection from '@/components/settings/general/CollaborationNameSection.vue'
+import SettingsGroup from '@/components/settings/layout/SettingsGroup.vue'
+import SettingsRow from '@/components/settings/layout/SettingsRow.vue'
+import SettingsSection from '@/components/settings/layout/SettingsSection.vue'
+import AppSelect from '@/components/ui/select/AppSelect.vue'
+import AppSwitch from '@/components/ui/toggle/AppSwitch.vue'
+
+const { availableLocales, locale, localeLabels, menu, recovery, setLocale, settings } = useI18n()
+
+const { theme } = useAppTheme()
+const selectUI = { trigger: 'w-full sm:w-52' }
+
+const language = computed<Locale>({
+  get: () => locale.value,
+  set: setLocale
+})
+
+const languageOptions = availableLocales.map((value) => ({
+  value,
+  label: localeLabels[value]
+}))
+
+const defaultAnimations = DEFAULT_APP_PREFERENCES.appearance.animations
+const defaultRecovery = DEFAULT_APP_PREFERENCES.recovery.enabled
+const accentModified = computed(
+  () => !isEqual(appPreferences.value.appearance.accent, DEFAULT_ACCENT)
+)
+
+const preserveUnsavedWork = computed({
+  get: () => recoveryEnabled.value,
+  set: setRecoveryEnabled
+})
+const defaultInterfaceScale = DEFAULT_APP_PREFERENCES.appearance.interfaceScale
+const interfaceScaleOptions = computed(() => {
+  const format = new Intl.NumberFormat(locale.value, { style: 'percent' })
+  return INTERFACE_SCALES.map((value) => ({ value, label: format.format(value / 100) }))
+})
+</script>
+
+<template>
+  <section class="flex flex-col gap-6" data-test-id="settings-general-panel">
+    <SettingsSection>
+      <template #title>{{ menu.language }}</template>
+      <template #description>{{ settings.languageDescription }}</template>
+      <SettingsGroup>
+        <SettingsRow as="label" :label="menu.language">
+          <AppSelect
+            v-model="language"
+            :label="menu.language"
+            :options="languageOptions"
+            :ui="selectUI"
+            data-test-id="settings-language"
+          />
+        </SettingsRow>
+      </SettingsGroup>
+    </SettingsSection>
+
+    <SettingsSection>
+      <template #title>{{ settings.appearance }}</template>
+      <SettingsGroup>
+        <SettingsRow
+          :label="settings.interfaceScale"
+          :description="settings.interfaceScaleDescription"
+          :modified="interfaceScalePreference !== defaultInterfaceScale"
+          class="flex-wrap"
+          @reset="interfaceScalePreference = defaultInterfaceScale"
+        >
+          <AppSelect
+            v-model="interfaceScalePreference"
+            :label="settings.interfaceScale"
+            :options="interfaceScaleOptions"
+            :ui="selectUI"
+            data-test-id="settings-interface-scale"
+          />
+        </SettingsRow>
+        <SettingsRow
+          as="label"
+          :label="menu.theme"
+          :modified="theme !== DEFAULT_THEME"
+          @reset="theme = DEFAULT_THEME"
+        >
+          <AppSelect
+            v-model="theme"
+            :label="menu.theme"
+            :options="[
+              { value: 'auto', label: menu.themeAuto },
+              { value: 'light', label: menu.themeLight },
+              { value: 'dark', label: menu.themeDark }
+            ]"
+            :ui="selectUI"
+          />
+        </SettingsRow>
+        <SettingsRow
+          :label="settings.accentColor"
+          :modified="accentModified"
+          class="flex-wrap gap-y-2"
+          @reset="updateAccentPreference({ ...DEFAULT_ACCENT })"
+        >
+          <AccentColorPicker />
+        </SettingsRow>
+        <SettingsRow
+          as="label"
+          :label="settings.animations"
+          :modified="animationPreference !== defaultAnimations"
+          @reset="animationPreference = defaultAnimations"
+        >
+          <AppSelect
+            v-model="animationPreference"
+            :label="settings.animations"
+            :options="[
+              { value: 'system', label: settings.animationsSystem },
+              { value: 'off', label: settings.animationsOff }
+            ]"
+            :ui="selectUI"
+          />
+        </SettingsRow>
+      </SettingsGroup>
+    </SettingsSection>
+
+    <template v-if="!isUiManageEmbed">
+      <CollaborationNameSection />
+
+      <SettingsSection>
+        <template #title>{{ recovery.settingsTitle }}</template>
+
+        <SettingsGroup>
+          <SettingsRow
+            as="label"
+            :label="recovery.preserveUnsavedWork"
+            :description="recovery.preserveUnsavedWorkDescription"
+            :modified="preserveUnsavedWork !== defaultRecovery"
+            @reset="preserveUnsavedWork = defaultRecovery"
+          >
+            <AppSwitch
+              v-model="preserveUnsavedWork"
+              :label="recovery.preserveUnsavedWork"
+              data-test-id="settings-recovery-enabled"
+            />
+          </SettingsRow>
+        </SettingsGroup>
+      </SettingsSection>
+
+      <CredentialSettingsSection />
+    </template>
+  </section>
+</template>

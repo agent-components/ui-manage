@@ -1,0 +1,143 @@
+import { invoke } from "@tauri-apps/api/core";
+import { computed, watch } from "vue";
+
+import {
+  useEditorCommands,
+  type EditorCommand,
+  type EditorCommandId,
+} from "@open-pencil/vue/editor/commands";
+
+import { useEditorStore } from "@/app/editor/active-store";
+import { runFocusedCommand } from "@/app/shell/commands/focused";
+import { createSharedEditorMenuActions } from "@/app/shell/menu/actions/editor";
+import { createSelectionMenuActions } from "@/app/shell/menu/actions/selection";
+import { watchNativeMenuFeatures } from "@/app/shell/menu/features";
+import { openFileDialog } from "@/app/shell/menu/files";
+import { useNativeMenuEvents } from "@/app/shell/menu/native-events";
+import {
+  OPEN_RECENT_EVENT_PREFIX,
+  watchRecentFilesMenu,
+} from "@/app/shell/menu/recent-files";
+import { createSaveMenuActions } from "@/app/shell/menu/save-actions";
+import { APP_MENU_SCHEMA, type AppMenuEntry } from "@/app/shell/menu/schema";
+import { SHELL_MENU_IDS } from "@/app/shell/menu/shell";
+import { useAppTheme } from "@/app/shell/theme";
+import {
+  isUiManageEmbed,
+  leaveUiManageEditor,
+} from "@/app/integrations/ui-manage/mode";
+import {
+  createTab,
+  closeTab,
+  activeTab,
+  openNewFileTab,
+  switchAdjacentTab,
+} from "@/app/tabs";
+import { IS_TAURI } from "@/constants";
+
+function commandMenuIds(entries: readonly AppMenuEntry[]): EditorCommandId[] {
+  return entries.flatMap((entry) => {
+    if (entry.type === "separator") return [];
+    return [
+      ...(entry.command ? [entry.command] : []),
+      ...commandMenuIds(entry.sub ?? []),
+    ];
+  });
+}
+
+const store = useEditorStore();
+const COMMAND_MENU_IDS = new Set<EditorCommandId>(
+  APP_MENU_SCHEMA.flatMap((group) => commandMenuIds(group.items))
+);
+
+/**
+ * Greys out the desktop menu's command items while their command is unavailable, such as Group
+ * with nothing selected, as the browser menu does. Item ids are their command ids.
+ */
+function watchNativeMenuDisabled(
+  commands: Record<EditorCommandId, EditorCommand>
+) {
+  // A joined key, so the watcher fires when the set changes rather than on every recompute.
+  const disabled = computed(() =>
+    [...COMMAND_MENU_IDS]
+      .filter((id) => !commands[id].enabled.value)
+      .sort()
+      .join("\n")
+  );
+  watch(
+    disabled,
+    (key) => {
+      const ids = key ? key.split("\n") : [];
+      invoke("set_native_menu_disabled", { ids }).catch((error: unknown) => {
+        console.warn("[Menu] Failed to update the native menu", error);
+      });
+    },
+    { immediate: true }
+  );
+}
+
+export function useEditorMenu() {
+  if (!IS_TAURI) return;
+
+  watchRecentFilesMenu();
+  watchNativeMenuFeatures();
+
+  const { setTheme } = useAppTheme();
+  const { commands, runCommand } = useEditorCommands();
+  watchNativeMenuDisabled(commands);
+
+  const actions: Partial<Record<string, () => void>> = {
+    new: () => {
+      if (isUiManageEmbed) leaveUiManageEditor();
+      else createTab();
+    },
+    "new-tab": () => openNewFileTab(),
+    open: () => void openFileDialog(),
+    close: () => {
+      if (activeTab.value) void closeTab(activeTab.value.id);
+    },
+    "previous-tab": () => switchAdjacentTab(-1),
+    "next-tab": () => switchAdjacentTab(1),
+    ...createSaveMenuActions(store),
+    "export-selection": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "png");
+    },
+    "export-png": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "png");
+    },
+    "export-svg": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "svg");
+    },
+    "export-pptx": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "pptx");
+    },
+    "export-drawio": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "drawio");
+    },
+    "export-fig": () => {
+      if (store.state.selectedIds.size > 0)
+        void store.exportSelection(1, "fig");
+    },
+    autosave: () => {
+      store.state.autosaveEnabled = !store.state.autosaveEnabled;
+    },
+    ...createSelectionMenuActions(store),
+    ...createSharedEditorMenuActions(setTheme),
+  };
+
+  useNativeMenuEvents((id) => {
+    if (id === "clear-recent-files") return;
+    if (id.startsWith(OPEN_RECENT_EVENT_PREFIX)) return;
+    if (SHELL_MENU_IDS.has(id)) return;
+    if (COMMAND_MENU_IDS.has(id as EditorCommandId)) {
+      runFocusedCommand(store, runCommand, id as EditorCommandId);
+      return;
+    }
+    actions[id]?.();
+  });
+}

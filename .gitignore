@@ -1,0 +1,31 @@
+# Build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+*.tsbuildinfo
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Vendored official OpenPencil app (local deps / build)
+vendor/open-pencil/node_modules
+vendor/open-pencil/dist
+vendor/open-pencil/.vite
+vendor/open-pencil/desktop/target
