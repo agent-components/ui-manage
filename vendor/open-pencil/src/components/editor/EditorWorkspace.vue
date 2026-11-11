@@ -31,6 +31,7 @@ import IconButton from '@/components/ui/button/IconButton.vue'
 import VariablesDialog from '@/components/variables/VariablesDialog.vue'
 import splitterTheme from '@/theme/splitter'
 
+import SharePageBar from './SharePageBar.vue'
 import WorkspacePill from './WorkspacePill.vue'
 
 const showChrome = appRuntimeConfig.showChrome
@@ -130,6 +131,7 @@ const { editor } = useI18n()
   >
     <div class="relative flex min-w-0 flex-1">
       <EditorCanvas />
+      <SharePageBar />
     </div>
   </div>
 

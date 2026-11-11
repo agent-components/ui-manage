@@ -42,6 +42,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaboration-awareness'
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
 import { canvasOverlayObstacles } from '@/app/editor/canvas/obstacles'
+import { isUiManageSharePreview } from '@/app/integrations/ui-manage/mode'
 import { appRuntimeConfig } from '@/app/runtime/config'
 import { appPreferences } from '@/app/settings/preferences/store'
 import CanvasEyedropperLoupe from '@/components/canvas/CanvasEyedropperLoupe.vue'
@@ -88,10 +89,22 @@ const onViewportResize = (width: number, height: number) => {
 const { updateCursor } = useCanvasCollaborationAwareness(store)
 const { selectAtContextPoint } = createCanvasContextSelection(canvasRef, store)
 
+/** 分享预览翻页时保留当前帧，避免整页 Preparation 遮罩闪白。 */
+const quietSharePageSwitch = () =>
+  isUiManageSharePreview() && store.state.preparation?.kind === 'page-switch'
+
 const shouldSuspendRender = () =>
+  !quietSharePageSwitch() &&
   store.state.preparation !== null &&
   store.state.preparation.kind !== 'font-retry' &&
   store.state.preparation.phase !== 'preparing-render'
+
+const showPreparationOverlay = computed(
+  () =>
+    Boolean(store.state.preparation) &&
+    store.state.preparation?.kind !== 'font-retry' &&
+    !quietSharePageSwitch()
+)
 
 /** The pan and zoom of the scene's last drawn frame, which preview islands follow. */
 const drawnView = shallowRef<ViewportTransform | null>(null)
@@ -136,11 +149,13 @@ const {
   // The scene canvas reports a canvas that cannot start.
   onFailed: () => undefined,
   get showRulers() {
+    // 分享预览是 play（editChrome=false），但仍展示设计稿刻度线。
+    const sharePreview = isUiManageSharePreview()
     return (
       appRuntimeConfig.showRulers &&
       store.state.showRulers &&
-      paneProfile.value.editChrome &&
-      paneProfile.value.rulers
+      paneProfile.value.rulers &&
+      (paneProfile.value.editChrome || sharePreview)
     )
   },
   getOverlayObstacles: () => canvasOverlayObstacles(canvasRef.value),
@@ -363,7 +378,7 @@ const cursor = computed(() =>
         </PopoverRoot>
         <CommentsLayer v-if="isActivePane" :canvas-el="canvasRef" :drawn="drawnView" />
         <PreparationOverlay
-          v-if="store.state.preparation && store.state.preparation.kind !== 'font-retry'"
+          v-if="showPreparationOverlay && store.state.preparation"
           :preparation="store.state.preparation"
         />
       </div>

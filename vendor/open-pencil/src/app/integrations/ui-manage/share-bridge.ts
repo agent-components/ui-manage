@@ -80,7 +80,38 @@ function enableShareReadOnly(store: ReturnType<typeof getActiveStore>): void {
   store.setReadOnly(true)
   // Canvas-only share view: no editor chrome; play mode = pan-only preview.
   store.state.showUI = false
+  store.state.showRulers = true
   store.startPlay()
+}
+
+function decodeShareHash(hash: string): string {
+  const raw = (hash || '').replace(/^#/, '').trim()
+  if (!raw) return ''
+  try {
+    let value = decodeURIComponent(raw)
+    if (/%[0-9A-Fa-f]{2}/.test(value)) value = decodeURIComponent(value)
+    return value.trim()
+  } catch {
+    return raw
+  }
+}
+
+/** 打开稿件后按 URL hash 落到对应页；无 hash 保持首页。 */
+async function restoreSharePageFromHash(store: ReturnType<typeof getActiveStore>): Promise<void> {
+  const hash = decodeShareHash(
+    typeof window !== 'undefined' ? window.location.hash : ''
+  )
+  if (!hash) return
+
+  const pages = store.graph.getPages()
+
+  const asIndex = /^(\d+)$/.exec(hash)
+  const target = asIndex
+    ? pages[Number(asIndex[1]) - 1]
+    : pages.find((page) => page.name === hash)
+
+  if (!target || target.id === store.state.currentPageId) return
+  await store.switchPage(target.id)
 }
 
 async function applyShareDocument(token: string, meta: ShareMeta): Promise<void> {
@@ -93,6 +124,9 @@ async function applyShareDocument(token: string, meta: ShareMeta): Promise<void>
   }
   tab.store.state.documentName = title
   enableShareReadOnly(tab.store)
+  await restoreSharePageFromHash(tab.store).catch((error) => {
+    console.error('[ui-manage share] restore page from hash', error)
+  })
 }
 
 function stopSharePolling(): void {
