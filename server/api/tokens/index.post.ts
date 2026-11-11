@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
       id: newApiTokenId(),
       ownerAccount: user.account,
       name,
+      token,
       tokenHash,
       tokenPrefix,
     },

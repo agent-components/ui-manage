@@ -108,15 +108,34 @@ async function confirmRevoke() {
   }
 }
 
-async function copyRevealedToken() {
-  const value = revealedToken.value?.token
-  if (!value) return
+async function copyText(value: string, okMessage: string) {
   try {
     await navigator.clipboard.writeText(value)
-    toast.info('已复制访问令牌')
+    toast.info(okMessage)
   } catch {
     toast.error('复制失败')
   }
+}
+
+async function copyRevealedToken() {
+  const value = revealedToken.value?.token
+  if (!value) return
+  await copyText(value, '已复制访问令牌')
+}
+
+async function copyMcpConfig(token: ApiTokenRow) {
+  try {
+    const { config } = await api.mcpConfig(token.id)
+    await copyText(config, '已复制 MCP 配置')
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : '复制失败')
+  }
+}
+
+async function copyRevealedMcpConfig() {
+  const created = revealedToken.value
+  if (!created) return
+  await copyMcpConfig(created)
 }
 
 function closeRevealed() {
@@ -366,7 +385,7 @@ onMounted(refresh)
                 <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">
                   最近使用
                 </AppTableHead>
-                <AppTableHead class="h-10 w-28 px-4 text-[12px] first:pl-5 last:pr-5">
+                <AppTableHead class="h-10 w-36 px-4 text-[12px] first:pl-5 last:pr-5">
                   操作
                 </AppTableHead>
               </AppTableRow>
@@ -403,13 +422,22 @@ onMounted(refresh)
                   {{ formatTime(token.lastUsedAt) }}
                 </AppTableCell>
                 <AppTableCell class="h-14 px-4 text-[13px] first:pl-5 last:pr-5">
-                  <button
-                    type="button"
-                    class="cursor-pointer text-[13px] text-error hover:underline"
-                    @click="openRevoke(token)"
-                  >
-                    撤销
-                  </button>
+                  <div class="flex items-center gap-3">
+                    <button
+                      type="button"
+                      class="cursor-pointer text-[13px] text-primary hover:underline"
+                      @click="copyMcpConfig(token)"
+                    >
+                      复制
+                    </button>
+                    <button
+                      type="button"
+                      class="cursor-pointer text-[13px] text-error hover:underline"
+                      @click="openRevoke(token)"
+                    >
+                      撤销
+                    </button>
+                  </div>
                 </AppTableCell>
               </AppTableRow>
             </AppTableBody>
@@ -473,7 +501,10 @@ onMounted(refresh)
       </label>
       <template #footer>
         <AppButton color="neutral" variant="ghost" @click="closeRevealed">关闭</AppButton>
-        <AppButton color="primary" variant="solid" @click="copyRevealedToken">复制令牌</AppButton>
+        <AppButton color="neutral" variant="outline" @click="copyRevealedToken">复制令牌</AppButton>
+        <AppButton color="primary" variant="solid" @click="copyRevealedMcpConfig">
+          复制 MCP 配置
+        </AppButton>
       </template>
     </AppDialog>
 

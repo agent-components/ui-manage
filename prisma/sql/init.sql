@@ -24,12 +24,16 @@ CREATE TABLE IF NOT EXISTS ui_manage.api_tokens (
   id uuid PRIMARY KEY,
   owner_account text NOT NULL,
   name text NOT NULL,
+  token text NOT NULL DEFAULT '',
   token_hash text NOT NULL UNIQUE,
   token_prefix text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   last_used_at timestamptz,
   revoked_at timestamptz
 );
+
+ALTER TABLE ui_manage.api_tokens
+  ADD COLUMN IF NOT EXISTS token text NOT NULL DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS api_tokens_owner_account_idx
   ON ui_manage.api_tokens (owner_account);
