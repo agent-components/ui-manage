@@ -24,6 +24,13 @@ const router = createRouter({
           meta: { auth: true },
         },
         {
+          path: "/tokens",
+          name: "ui-manage-tokens",
+          component: () =>
+            import("@/app/integrations/ui-manage/TokensView.vue"),
+          meta: { auth: true },
+        },
+        {
           path: "/designs/:id",
           name: "ui-manage-design",
           component: DesignView,

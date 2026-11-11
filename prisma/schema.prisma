@@ -23,3 +23,19 @@ model Design {
   @@map("designs")
   @@schema("ui_manage")
 }
+
+/// MCP / API 访问令牌；明文只在创建时返回一次，库中只存 SHA-256。
+model ApiToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  ownerAccount String    @map("owner_account")
+  name         String
+  tokenHash    String    @unique @map("token_hash")
+  tokenPrefix  String    @map("token_prefix")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+  revokedAt    DateTime? @map("revoked_at")
+
+  @@index([ownerAccount])
+  @@map("api_tokens")
+  @@schema("ui_manage")
+}

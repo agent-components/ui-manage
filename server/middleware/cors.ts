@@ -14,7 +14,8 @@ export default defineEventHandler((event) => {
   setResponseHeaders(event, {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Allow-Headers":
+      "Authorization, Content-Type, x-doc-id, x-doc-name, mcp-session-id, mcp-protocol-version",
     "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS",
   });
 

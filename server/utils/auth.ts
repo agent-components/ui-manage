@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createError, getHeader } from "h3";
 import type { H3Event } from "h3";
+import { hashApiToken, isApiTokenFormat } from "./api-token";
 import { prisma } from "./prisma";
 
 export type AuthUser = {
@@ -87,6 +88,47 @@ export async function findUserByToken(token: string): Promise<AuthUser | null> {
     LIMIT 1
   `;
   return toAuthUser(rows[0]);
+}
+
+/** MCP 访问令牌：按哈希匹配未撤销记录，并更新 last_used_at。 */
+export async function findUserByApiToken(
+  token: string
+): Promise<AuthUser | null> {
+  if (!isApiTokenFormat(token)) return null;
+  const tokenHash = hashApiToken(token);
+  const apiToken = await prisma.apiToken.findFirst({
+    where: { tokenHash, revokedAt: null },
+    select: { id: true, ownerAccount: true },
+  });
+  if (!apiToken) return null;
+
+  const rows = await prisma.$queryRaw<UserRow[]>`
+    SELECT id, account, "displayName"
+    FROM public.users
+    WHERE account = ${apiToken.ownerAccount}
+      AND status = 'ACTIVE'
+    LIMIT 1
+  `;
+  const user = toAuthUser(rows[0]);
+  if (!user) return null;
+
+  await prisma.apiToken.update({
+    where: { id: apiToken.id },
+    data: { lastUsedAt: new Date() },
+  });
+  return user;
+}
+
+export async function requireApiTokenUser(event: H3Event): Promise<AuthUser> {
+  const token = extractBearerToken(event);
+  if (!token) {
+    throw createError({ statusCode: 401, message: "未提供访问令牌" });
+  }
+  const user = await findUserByApiToken(token);
+  if (!user) {
+    throw createError({ statusCode: 401, message: "访问令牌无效或已撤销" });
+  }
+  return user;
 }
 
 export async function clearUserToken(token: string): Promise<void> {

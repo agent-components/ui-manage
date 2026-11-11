@@ -204,7 +204,7 @@ onMounted(refresh)
         </div>
       </div>
 
-      <nav class="flex-1 px-3 pt-1">
+      <nav class="flex-1 space-y-1 px-3 pt-1">
         <div
           class="relative flex items-center gap-2.5 rounded-md bg-accent/10 py-2.5 pr-3 pl-3 text-[13px] font-medium text-primary"
           aria-current="page"
@@ -216,6 +216,13 @@ onMounted(refresh)
           <icon-lucide-layout-template class="size-4 shrink-0 opacity-90" />
           设计文件
         </div>
+        <RouterLink
+          to="/tokens"
+          class="flex items-center gap-2.5 rounded-md py-2.5 pr-3 pl-3 text-[13px] font-medium text-muted outline-none transition-colors hover:bg-hover hover:text-surface"
+        >
+          <icon-lucide-key-round class="size-4 shrink-0 opacity-90" />
+          访问令牌
+        </RouterLink>
       </nav>
 
       <div class="mt-auto border-t border-border px-3 py-3">
@@ -294,6 +301,14 @@ onMounted(refresh)
               :side-offset="8"
               class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
             >
+              <button
+                type="button"
+                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
+                @click="router.push('/tokens')"
+              >
+                <icon-lucide-key-round class="size-3.5 text-muted" />
+                访问令牌
+              </button>
               <button
                 type="button"
                 class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"

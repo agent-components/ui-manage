@@ -9,7 +9,7 @@
 - Prisma（`prisma/`，schema `ui_manage`）
 - 登录复用 `harness.public.users`（Bearer token）
 - `.fig` 内容存 MinIO（S3 兼容）
-- MCP：后续在 `server/` 自建 Web MCP；本仓库不跑官方 agent MCP
+- MCP：`POST /mcp`（Streamable HTTP），Bearer 访问令牌 + `x-doc-id` / `x-doc-name`
 
 ## 本地开发
 
@@ -31,3 +31,9 @@ pnpm dev
 - `POST /api/auth/login` → `{ token, user }`
 - 请求头：`Authorization: Bearer <token>`
 - token 存 `localStorage`（`ui_manage_token`）
+
+## 访问令牌与 MCP
+
+- 登录后打开 `/tokens` 创建访问令牌（明文只显示一次）
+- MCP：`Authorization: Bearer <访问令牌>`，并带 `x-doc-id`（UUID）、`x-doc-name`
+- 设计稿不存在时按这两个头创建；画稿工具写回 MinIO 中的 `.fig`
