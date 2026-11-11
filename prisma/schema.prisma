@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["ui_manage"]
+}
+
+/// 业务表；登录复用 public.users，不在此建模以免迁移误改通用用户表。
+model Design {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  ownerAccount String   @map("owner_account")
+  objectKey    String   @unique @map("object_key")
+  byteSize     Int?     @map("byte_size")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerAccount])
+  @@map("designs")
+  @@schema("ui_manage")
+}
