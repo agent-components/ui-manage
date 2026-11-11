@@ -102,7 +102,7 @@ const { overflowStart, overflowEnd, scrollTowardHidden } = useScrollOverflow(men
     <div class="flex items-center gap-2 px-2 py-1.5">
       <IconButton
         v-if="isUiManageEmbed && !sharePreview"
-        label="返回设计稿列表"
+        label="返回设计文件列表"
         data-test-id="app-back-to-designs"
         @click="leaveDocument"
       >

@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import { useUiManageAuth } from "@/app/integrations/ui-manage/auth";
 
-import WorkspaceView from "./views/WorkspaceView.vue";
+import DesignView from "./views/DesignView.vue";
 
 const uiManageEmbed = import.meta.env.VITE_OPENPENCIL_UI_MANAGE === "1";
 
@@ -21,36 +21,41 @@ const router = createRouter({
           name: "ui-manage-designs",
           component: () =>
             import("@/app/integrations/ui-manage/DesignsView.vue"),
+          meta: { auth: true },
         },
         {
           path: "/designs/:id",
           name: "ui-manage-design",
-          component: WorkspaceView,
+          component: DesignView,
           props: true,
+          meta: { auth: true },
         },
         {
           path: "/share/:token",
           name: "ui-manage-share",
-          component: WorkspaceView,
+          component: DesignView,
           props: true,
           meta: { public: true, share: true },
         },
         { path: "/", redirect: "/designs" },
       ]
-    : [
-        { path: "/", component: WorkspaceView },
-      ],
+    : [{ path: "/", component: DesignView }],
 });
 
 if (uiManageEmbed) {
-  router.beforeEach((to) => {
+  router.beforeEach(async (to) => {
     const auth = useUiManageAuth();
     if (!auth.ready.value) auth.loadFromStorage();
+
+    // Share preview is public + read-only; create/edit always need a live session.
     if (to.meta.public) {
-      if (auth.token.value && to.path === "/login") return { path: "/designs" };
+      if (to.path === "/login" && (await auth.ensureSession())) {
+        return { path: "/designs" };
+      }
       return true;
     }
-    if (!auth.token.value) {
+
+    if (!(await auth.ensureSession())) {
       return { path: "/login", query: { redirect: to.fullPath } };
     }
     return true;

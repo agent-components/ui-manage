@@ -4,10 +4,10 @@ import { useEventListener } from '@vueuse/core'
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { openingCloudLink, shownEditorStore, versionPreviewKey } from '@/app/cloud/integration'
 import { openWebLinkFromLocation, withoutWebLinkParams } from '@/app/document/io/web-link'
 import { setActiveEditorStore } from '@/app/editor/active-store'
 import { focusNodesByName } from '@/app/editor/selection/focus'
+import { useUiManageAuth } from '@/app/integrations/ui-manage/auth'
 import { bootUiManageBridgeFromRoute } from '@/app/integrations/ui-manage/bridge'
 import {
   bootSharePreview,
@@ -24,7 +24,6 @@ import {
   ensureHomeTab,
   createTab,
   getActiveStore,
-  tabCount,
   type Tab
 } from '@/app/tabs'
 import { syncTabAddress } from '@/app/tabs/address'
@@ -34,7 +33,6 @@ import EditorWorkspace from '@/components/editor/EditorWorkspace.vue'
 import FileApiBanner from '@/components/FileApiBanner.vue'
 import FontStatusBanner from '@/components/font-status/FontStatusBanner.vue'
 import RenameSelectionDialog from '@/components/selection/RenameSelectionDialog.vue'
-import LoadingScreen from '@/components/shell/LoadingScreen.vue'
 import TabBar from '@/components/TabBar.vue'
 import { IS_BROWSER } from '@/constants'
 
@@ -44,19 +42,11 @@ const uiManageEmbed = import.meta.env.VITE_OPENPENCIL_UI_MANAGE === '1'
 const isShareRoute = computed(
   () => route.name === 'ui-manage-share' || Boolean(props.token)
 )
-/**
- * The active tab as it shows: a version of its document being previewed takes the document's
- * place, in a workspace of its own, until the history goes back to the document.
- */
 const shown = computed(() => {
   const tab = activeTab.value
   if (!tab) return null
-  return {
-    tab: { ...tab, store: shownEditorStore(tab.store) },
-    key: tab.id + versionPreviewKey(tab.store)
-  }
+  return { tab, key: tab.id }
 })
-// Shortcuts, menus, and the clipboard act on what the tab shows.
 watch(
   () => shown.value?.tab.store,
   (store) => {
@@ -72,13 +62,10 @@ watch(
     if (pins) ensureHomeTab()
   }
 )
-const opensCloudLink = ['documentId', 'shareId', 'invitationId'].some(
-  (param) => typeof route.params[param] === 'string'
-)
 
 function openFirstTab(): Tab {
   if (pinHome) createHomeTab()
-  return showHomeFirst || opensCloudLink ? createHomeTab() : createTab()
+  return showHomeFirst ? createHomeTab() : createTab()
 }
 
 {
@@ -128,13 +115,27 @@ onMounted(async () => {
     return
   }
 
-  // ui-manage: open/save only via Nitro `/api/designs/:id/content`.
+  // ui-manage: open/save only via Nitro `/api/designs/:id/content` (login required).
   if (uiManageEmbed && props.id) {
+    const auth = useUiManageAuth()
+    if (!(await auth.ensureSession())) {
+      await router.replace({ path: '/login', query: { redirect: route.fullPath } })
+      return
+    }
     try {
-      await bootUiManageBridgeFromRoute(props.id)
+      const ok = await bootUiManageBridgeFromRoute(props.id)
+      if (!ok) {
+        await router.replace({ path: '/login', query: { redirect: route.fullPath } })
+      }
     } catch (error) {
       console.error('[ui-manage bridge]', error)
-      toast.error(error instanceof Error ? error.message : String(error))
+      const message = error instanceof Error ? error.message : String(error)
+      if (/\(401\)/.test(message) || /未登录|登录/.test(message)) {
+        auth.clear()
+        await router.replace({ path: '/login', query: { redirect: route.fullPath } })
+        return
+      }
+      toast.error(message)
     }
     return
   }
@@ -172,6 +173,5 @@ onUnmounted(() => {
       :key="shown.key"
       :tab="shown.tab"
     />
-    <LoadingScreen v-if="openingCloudLink" />
   </div>
 </template>

@@ -35,7 +35,7 @@ import WorkspacePill from './WorkspacePill.vue'
 
 const showChrome = appRuntimeConfig.showChrome
 /**
- * The document tab this workspace edits. WorkspaceView keys the workspace by tab, so the tab and
+ * The document tab this shell edits. DesignView keys the editor by tab, so the tab and
  * its store are fixed for its lifetime, and its editor UI stays bound to that document rather
  * than following the active tab to the next document when this one closes.
  */

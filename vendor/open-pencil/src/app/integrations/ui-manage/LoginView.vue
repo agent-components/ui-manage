@@ -39,8 +39,8 @@ async function onSubmit() {
       class="w-full max-w-sm rounded-lg border border-border bg-panel p-6 shadow-sm"
       @submit.prevent="onSubmit"
     >
-      <h1 class="text-base font-semibold text-surface">设计稿管理</h1>
-      <p class="mt-1 text-xs text-muted">登录后管理并编辑设计稿</p>
+      <h1 class="text-base font-semibold text-surface">屏幕设计</h1>
+      <p class="mt-1 text-xs text-muted">登录后管理并编辑设计文件</p>
 
       <label class="mt-6 block text-xs font-medium text-surface">
         账号

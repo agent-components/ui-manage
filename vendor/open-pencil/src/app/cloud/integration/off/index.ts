@@ -2,13 +2,11 @@ import { noop } from 'es-toolkit'
 import { computed } from 'vue'
 
 import type { CloudAIClient } from '@open-pencil/cloud/client'
-import type { WorkspaceSummary } from '@open-pencil/cloud/contract'
 
-/** ui-manage: Cloud off — self-contained stub (no deep @/app/cloud/* deps). */
+/** ui-manage: Cloud off — no「空间」/workspace; designs are a flat file list. */
 export const CLOUD_INCLUDED: boolean = false
 export const CLOUD_STORAGE_PROVIDER_ID = 'cloud'
 
-export type CloudAIWorkspace = { id: string; name: string }
 export type CloudAccount = { id: string; email?: string; name?: string }
 
 /** Legacy Save To destination shape retained for stub signatures. */
@@ -28,10 +26,6 @@ export const cloudBillingURL = computed<string | null>(() => null)
 
 export function cloudAIClient(): CloudAIClient | null {
   return null
-}
-
-export async function cloudAIWorkspaces(): Promise<CloudAIWorkspace[]> {
-  return []
 }
 
 export function startCloud(): () => void {
@@ -81,11 +75,9 @@ export function useHomeCloud() {
     signedIn: computed(() => false),
     checking: computed(() => false),
     account: computed<(CloudAccount & { host: string }) | null>(() => null),
-    workspaces: computed<WorkspaceSummary[]>(() => []),
     serverId: computed<string | null>(() => null),
     connect: noop,
     openAccount: noop,
-    newWorkspace: noop,
     signOut: () => Promise.resolve()
   }
 }
