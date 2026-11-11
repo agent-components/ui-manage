@@ -6,7 +6,19 @@ import { ensureMcpFonts } from "./mcp-fonts";
 import { getDesignObject, putDesignObject } from "./s3";
 import { prisma } from "./prisma";
 
+/** 同一设计稿复用内存会话，保留 currentPage（switch_page 为 view mutation，不落盘）。 */
+type DesignSession = {
+  designId: string;
+  objectKey: string;
+  name: string;
+  graph: SceneGraph;
+  figma: FigmaAPI;
+  lastUsed: number;
+};
+
+const sessions = new Map<string, DesignSession>();
 const locks = new Map<string, Promise<unknown>>();
+const SESSION_TTL_MS = 30 * 60 * 1000;
 
 async function withDesignLock<T>(
   designId: string,
@@ -57,6 +69,41 @@ function createFigma(graph: SceneGraph): FigmaAPI {
   return figma;
 }
 
+function pruneSessions(now = Date.now()) {
+  for (const [id, session] of sessions) {
+    if (now - session.lastUsed > SESSION_TTL_MS) sessions.delete(id);
+  }
+}
+
+async function getSession(design: McpDesign): Promise<DesignSession> {
+  pruneSessions();
+  const existing = sessions.get(design.id);
+  if (
+    existing &&
+    existing.objectKey === design.objectKey &&
+    existing.name === design.name
+  ) {
+    existing.lastUsed = Date.now();
+    return existing;
+  }
+
+  const graph = await loadGraph(design);
+  const session: DesignSession = {
+    designId: design.id,
+    objectKey: design.objectKey,
+    name: design.name,
+    graph,
+    figma: createFigma(graph),
+    lastUsed: Date.now(),
+  };
+  sessions.set(design.id, session);
+  return session;
+}
+
+export function dropMcpDocumentSession(designId: string) {
+  sessions.delete(designId);
+}
+
 export async function withMcpDocument<T>(
   design: McpDesign,
   mutates: boolean,
@@ -64,11 +111,13 @@ export async function withMcpDocument<T>(
 ): Promise<T> {
   await ensureMcpFonts();
   return withDesignLock(design.id, async () => {
-    const graph = await loadGraph(design);
-    const figma = createFigma(graph);
-    const result = await run(figma);
+    const session = await getSession(design);
+    const result = await run(session.figma);
+    session.lastUsed = Date.now();
     if (mutates) {
-      const bytes = await exportFigFile(graph, { documentName: design.name });
+      const bytes = await exportFigFile(session.graph, {
+        documentName: design.name,
+      });
       await putDesignObject(design.objectKey, bytes);
       await prisma.design.update({
         where: { id: design.id },
