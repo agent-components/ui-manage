@@ -15,6 +15,7 @@ model Design {
   ownerAccount String   @map("owner_account")
   objectKey    String   @unique @map("object_key")
   byteSize     Int?     @map("byte_size")
+  shareToken   String?  @unique @map("share_token")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
