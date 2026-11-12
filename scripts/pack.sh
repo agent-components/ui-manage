@@ -92,6 +92,14 @@ if [[ ! -d .output/server/node_modules/@open-pencil/core ]]; then
   exit 1
 fi
 
+# core 以 npm 别名引用 yoga-layout，Nitro 只按真实包名 @open-pencil/yoga-layout 放进产物。
+# 没有这个同名链接时，加载 /mcp 会在 import 阶段抛错，对外就是 HTTP 500。
+if [[ ! -d .output/server/node_modules/@open-pencil/yoga-layout ]]; then
+  echo "产物里没有 @open-pencil/yoga-layout，MCP 排版会缺依赖" >&2
+  exit 1
+fi
+ln -sfn @open-pencil/yoga-layout .output/server/node_modules/yoga-layout
+
 echo "==> 组装发布目录"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"

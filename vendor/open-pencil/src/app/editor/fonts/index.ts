@@ -14,6 +14,7 @@ import {
 import type { SceneGraph } from '@open-pencil/scene-graph'
 
 import { browserWebFontFetch } from '@/app/editor/fonts/browser-fetch'
+import { installBundledCjkFonts } from '@/app/editor/fonts/bundled-cjk'
 
 if (typeof navigator !== 'undefined') {
   fontManager.setFallbackUserAgent(navigator.userAgent)
@@ -48,6 +49,7 @@ watch(
 )
 
 fontManager.setWebFontFetch(browserWebFontFetch)
+installBundledCjkFonts()
 
 export function preloadFonts(): void {
   if (onlineFontsEnabled.value) fontManager.preloadWebFontFamilies()
