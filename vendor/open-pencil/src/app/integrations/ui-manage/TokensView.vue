@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
+import { nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
-import { openSettingsDialog } from '@/app/settings/dialog'
 import { resolvedAppTheme } from '@/app/shell/theme'
 import { toast } from '@/app/shell/ui'
 import BrandMark from '@/components/brand/BrandMark.vue'
-import AccountAvatar from '@/components/presence/AccountAvatar.vue'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import { AppConfirmationDialog, AppDialog } from '@/components/ui/dialog'
 import AppAlert from '@/components/ui/feedback/AppAlert.vue'
@@ -24,11 +21,9 @@ import {
   AppTableRow
 } from '@/components/ui/table'
 
-import { useUiManageAuth } from './auth'
+import AccountMenu from './AccountMenu.vue'
 import { useUiManageTokens, type ApiTokenRow, type CreatedApiToken } from './tokens-api'
 
-const router = useRouter()
-const { user, logout } = useUiManageAuth()
 const api = useUiManageTokens()
 
 const tokens = ref<ApiTokenRow[]>([])
@@ -47,9 +42,6 @@ const revealedToken = ref<CreatedApiToken | null>(null)
 
 const revokeOpen = ref(false)
 const revokeTarget = ref<ApiTokenRow | null>(null)
-const accountMenuOpen = ref(false)
-
-const displayName = computed(() => user.value?.displayName || user.value?.account || '')
 
 async function refresh() {
   loading.value = true
@@ -147,17 +139,6 @@ watch(revealedOpen, (open) => {
   if (!open) revealedToken.value = null
 })
 
-function openSystemSettings() {
-  accountMenuOpen.value = false
-  openSettingsDialog()
-}
-
-async function onLogout() {
-  accountMenuOpen.value = false
-  await logout()
-  await router.replace('/login')
-}
-
 function formatTime(value: string | null) {
   if (!value) return '—'
   const d = new Date(value)
@@ -209,45 +190,7 @@ onMounted(refresh)
       </nav>
 
       <div class="mt-auto border-t border-border px-3 py-3">
-        <PopoverRoot v-model:open="accountMenuOpen">
-          <PopoverTrigger
-            class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left outline-none transition-colors hover:bg-hover focus-visible:ring-1 focus-visible:ring-panel-focus"
-            :aria-label="displayName ? `${displayName}，账户菜单` : '账户菜单'"
-          >
-            <span class="min-w-0 truncate text-[13px] text-surface">{{ displayName }}</span>
-            <AccountAvatar
-              v-if="user"
-              :id="user.id"
-              :name="displayName || user.account"
-              size="sm"
-            />
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent
-              side="top"
-              align="start"
-              :side-offset="8"
-              class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
-            >
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="openSystemSettings"
-              >
-                <icon-lucide-settings class="size-3.5 text-muted" />
-                系统设置
-              </button>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="onLogout"
-              >
-                <icon-lucide-log-out class="size-3.5 text-muted" />
-                退出登录
-              </button>
-            </PopoverContent>
-          </PopoverPortal>
-        </PopoverRoot>
+        <AccountMenu placement="sidebar" />
       </div>
     </aside>
 
@@ -264,52 +207,7 @@ onMounted(refresh)
           />
           <span class="truncate text-[15px] font-semibold">访问令牌</span>
         </div>
-        <PopoverRoot>
-          <PopoverTrigger
-            class="flex cursor-pointer items-center gap-2 rounded-md outline-none focus-visible:ring-1 focus-visible:ring-panel-focus"
-            :aria-label="displayName ? `${displayName}，账户菜单` : '账户菜单'"
-          >
-            <span class="max-w-24 truncate text-[13px] text-surface">{{ displayName }}</span>
-            <AccountAvatar
-              v-if="user"
-              :id="user.id"
-              :name="displayName || user.account"
-              size="sm"
-            />
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent
-              side="bottom"
-              align="end"
-              :side-offset="8"
-              class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
-            >
-              <RouterLink
-                to="/tokens"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-              >
-                <icon-lucide-key-round class="size-3.5 text-muted" />
-                访问令牌
-              </RouterLink>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="openSystemSettings"
-              >
-                <icon-lucide-settings class="size-3.5 text-muted" />
-                系统设置
-              </button>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="onLogout"
-              >
-                <icon-lucide-log-out class="size-3.5 text-muted" />
-                退出登录
-              </button>
-            </PopoverContent>
-          </PopoverPortal>
-        </PopoverRoot>
+        <AccountMenu placement="header" />
       </header>
 
       <main class="flex w-full flex-1 flex-col gap-4 px-5 py-5 sm:px-6 lg:px-8">

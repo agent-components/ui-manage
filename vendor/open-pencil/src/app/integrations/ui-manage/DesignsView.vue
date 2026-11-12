@@ -225,53 +225,7 @@ onMounted(refresh)
           />
           <span class="truncate text-[15px] font-semibold">屏幕设计</span>
         </div>
-        <PopoverRoot>
-          <PopoverTrigger
-            class="flex cursor-pointer items-center gap-2 rounded-md outline-none focus-visible:ring-1 focus-visible:ring-panel-focus"
-            :aria-label="displayName ? `${displayName}，账户菜单` : '账户菜单'"
-          >
-            <span class="max-w-24 truncate text-[13px] text-surface">{{ displayName }}</span>
-            <AccountAvatar
-              v-if="user"
-              :id="user.id"
-              :name="displayName || user.account"
-              size="sm"
-            />
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent
-              side="bottom"
-              align="end"
-              :side-offset="8"
-              class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
-            >
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="router.push('/tokens')"
-              >
-                <icon-lucide-key-round class="size-3.5 text-muted" />
-                访问令牌
-              </button>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="openSystemSettings"
-              >
-                <icon-lucide-settings class="size-3.5 text-muted" />
-                系统设置
-              </button>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="onLogout"
-              >
-                <icon-lucide-log-out class="size-3.5 text-muted" />
-                退出登录
-              </button>
-            </PopoverContent>
-          </PopoverPortal>
-        </PopoverRoot>
+        <AccountMenu placement="header" />
       </header>
 
       <main class="flex w-full flex-1 flex-col gap-4 px-5 py-5 sm:px-6 lg:px-8">
