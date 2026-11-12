@@ -8,6 +8,7 @@
     "dev:web": "cd vendor/open-pencil && OPENPENCIL_UI_MANAGE=1 npx vite --host 127.0.0.1 --port 5173 --strictPort",
     "editor:install": "cd vendor/open-pencil && bun install",
     "build": "nitro build",
+    "pack": "bash scripts/pack.sh",
     "preview": "node .output/server/index.mjs",
     "postinstall": "prisma generate",
     "db:init": "docker exec -i postgres psql -U postgres -d harness < prisma/sql/init.sql",
