@@ -16,7 +16,6 @@ import { setOpenPencilStore } from "@/app/browser-bridge";
 import { confirmAllDocuments } from "@/app/document/close/all";
 import { confirmDocumentClose } from "@/app/document/close/controller";
 import { requestDocumentClose } from "@/app/document/close/prompt";
-import { documentAssetReader } from "@/app/document/io/assets";
 import { readFigDocument } from "@/app/document/io/fig";
 import { applyImportedDocument } from "@/app/document/io/imported-document";
 import { isFigArchiveName } from "@/app/document/io/names";
@@ -576,7 +575,6 @@ export async function openFileInNewTab(
           name: file.name,
           mimeType: file.type || undefined,
           data: new Uint8Array(await file.arrayBuffer()),
-          readAsset: documentAssetReader(path),
         },
         { icons: appIcons }
       );

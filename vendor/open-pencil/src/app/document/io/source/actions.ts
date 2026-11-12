@@ -7,10 +7,7 @@ import { createAutosave } from "@/app/document/autosave";
 import { createDocumentChanges } from "@/app/document/io/changes";
 import {
   documentFileName,
-  documentNameFromFigPath,
-  downloadNameFromPath,
   figDownloadName,
-  isFigArchiveName,
 } from "@/app/document/io/names";
 import { createSaveActions } from "@/app/document/io/save/actions";
 import { createDocumentSourceState } from "@/app/document/io/source/state";
@@ -19,7 +16,6 @@ import { createDocumentRecovery } from "@/app/document/recovery";
 import { recoveryEnabled } from "@/app/document/recovery/preferences";
 import type { StorageDocumentBinding } from "@/app/document/io/storage-binding";
 import { trackDocumentFormat } from "@/app/telemetry";
-import { IS_TAURI } from "@/constants";
 
 type DocumentSourceState = EditorState & {
   documentName: string;
@@ -195,61 +191,6 @@ export function createDocumentSourceActions({
     void recovery.markProtectedVersion(changes.capture());
   }
 
-  function setPlannedFilePath(path: string) {
-    stopWatchingFile();
-    setStorageBinding(null);
-    setFileHandle(null);
-    setFilePath(path);
-    const downloadName = downloadNameFromPath(path);
-    setDownloadName(downloadName);
-    state.documentName = documentNameFromFigPath(downloadName);
-  }
-
-  let retargeting = false;
-
-  /**
-   * Save to a new target; when the write fails, the document keeps the source it had. A second
-   * retarget while one is in flight is refused, so a failure never restores another save's target.
-   */
-  async function saveToNewTarget(planTarget: () => void): Promise<boolean> {
-    if (retargeting) return false;
-    retargeting = true;
-    const previous = {
-      filePath: getFilePath(),
-      fileHandle: getFileHandle(),
-      storageBinding: getStorageBinding(),
-      downloadName: getDownloadName(),
-      documentName: state.documentName,
-    };
-    const restore = () => {
-      setStorageBinding(previous.storageBinding);
-      setFileHandle(previous.fileHandle);
-      setFilePath(previous.filePath);
-      setDownloadName(previous.downloadName);
-      state.documentName = previous.documentName;
-      if (previous.filePath || previous.fileHandle) void startWatchingFile();
-    };
-    planTarget();
-    try {
-      const saved = await saveAndTrack(saveFigFile);
-      if (!saved) restore();
-      return saved;
-    } catch (error) {
-      restore();
-      throw error;
-    } finally {
-      retargeting = false;
-    }
-  }
-
-  async function saveFigFileToPath(path: string): Promise<boolean> {
-    // Only the desktop app writes paths; a browser would fall back to a download.
-    if (!IS_TAURI) return false;
-    const saved = await saveToNewTarget(() => setPlannedFilePath(path));
-    if (saved) void startWatchingFile();
-    return saved;
-  }
-
   /**
    * Hand the document to `write`, such as an MCP server saving it to a path a browser cannot
    * reach, and count it saved as a download is. Where the document saves next does not change.
@@ -279,8 +220,6 @@ export function createDocumentSourceActions({
     onDocumentRenamed: renamed.on,
     setDocumentSource,
     setStorageDocumentSource,
-    setPlannedFilePath,
-    saveFigFileToPath,
     saveFigFileCopy: (write: (data: Uint8Array) => Promise<void>) =>
       saveAndTrack(() => saveFigFileCopy(write)),
     startWatchingCurrentFile,

@@ -1,5 +1,3 @@
-import { open } from '@tauri-apps/plugin-dialog'
-import { readFile } from '@tauri-apps/plugin-fs'
 import { useFileDialog } from '@vueuse/core'
 import { uniq } from 'es-toolkit/array'
 import { basename } from 'pathe'
@@ -15,8 +13,7 @@ import {
 } from '@/app/document/io/browser'
 import { notificationMessages } from '@/app/i18n/notifications'
 import { toast } from '@/app/shell/ui'
-import { getTabsSnapshot, openFileInNewTab, switchTab } from '@/app/tabs'
-import { findTabByFileIdentity } from '@/app/tabs/open/identity'
+import { openFileInNewTab } from '@/app/tabs'
 import { IS_BROWSER } from '@/constants'
 
 const io = new IORegistry(BUILTIN_IO_FORMATS)
@@ -121,48 +118,7 @@ export async function openDesignFileBatch<T>(
   }
 }
 
-export async function readTauriDesignFile(path: string): Promise<File> {
-  assertSupportedDesignFile(path)
-  const bytes = await readFile(path)
-  return new File([bytes], basename(path) || 'file.fig')
-}
-
-export async function chooseTauriOpenPaths(): Promise<string[]> {
-  const paths = await open({
-    filters: [{ name: 'Design file', extensions: READABLE_DOCUMENT_EXTENSIONS }],
-    multiple: true
-  })
-  if (!paths) return []
-  return typeof paths === 'string' ? [paths] : paths
-}
-
-export async function openFileFromPath(path: string) {
-  if (!IS_TAURI) return
-  const file = await readTauriDesignFile(path)
-  const store = await openFileInNewTab(file, undefined, path)
-}
-
-/**
- * Focuses the tab already showing `path` without touching the disk. False when no tab
- * holds it, which lets a caller fall back to opening the file. `openFileFromPath` would
- * also land on the existing tab, but only after re-reading the file, so a document that
- * moved or lost its permissions since it opened would reject instead of being focused.
- */
-export async function activateTabForPath(path: string): Promise<boolean> {
-  const tab = await findTabByFileIdentity(getTabsSnapshot(), { handle: null, path })
-  if (!tab) return false
-  // The tab can close while the identity lookup awaits, and `switchTab` then does nothing:
-  // reporting success here would make the caller skip opening the file.
-  return switchTab(tab.id)
-}
-
 export async function openFileDialog() {
-  if (IS_TAURI) {
-    const paths = await chooseTauriOpenPaths()
-    await openDesignFileBatch(paths, (path) => basename(path) || path, openFileFromPath)
-    return
-  }
-
   if (window.showOpenFilePicker) {
     try {
       const handles = await window.showOpenFilePicker({

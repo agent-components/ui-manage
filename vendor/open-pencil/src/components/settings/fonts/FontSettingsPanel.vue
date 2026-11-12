@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 
 import {
   DEFAULT_WEB_FONT_PROVIDER_SETTINGS,
@@ -17,29 +17,17 @@ import SettingsRow from '@/components/settings/layout/SettingsRow.vue'
 import SettingsSection from '@/components/settings/layout/SettingsSection.vue'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import AppSwitch from '@/components/ui/toggle/AppSwitch.vue'
-import { IS_TAURI } from '@/constants'
 
-/**
- * Where text gets its fonts: the system's, online providers', and on desktop the downloaded
- * cache and fallback packs.
- */
+/** Where text gets its fonts: the system's, and online providers'. */
 const { fonts, common } = useI18n()
-/** Only the desktop app downloads fonts to disk; the browser leaves caching to itself. */
-const desktop = IS_TAURI
 const {
   accessState,
   accessStateLabel,
   busyAction,
-  cacheCount,
-  cacheSize,
-  cacheUpdatedLabel,
   canRequestLocalFonts,
   status,
   onlineFontsEnabled,
   fontProviderSettings,
-  clearCache,
-  downloadFallbacks,
-  refreshSummary,
   requestAccess,
   setFontProviderEnabled,
   setOnlineFontsEnabled
@@ -47,10 +35,6 @@ const {
 
 const online = computed(() => onlineFontsEnabled.value)
 const providerEnabled = (provider: WebFontProviderId) => fontProviderSettings.value[provider]
-
-onMounted(() => {
-  void refreshSummary()
-})
 </script>
 
 <template>
@@ -58,9 +42,7 @@ onMounted(() => {
     <div class="flex flex-col gap-6">
       <SettingsSection>
         <template #title>{{ fonts.settingsTitle }}</template>
-        <template #description>{{
-          desktop ? fonts.settingsDesktopDescription : fonts.settingsBrowserDescription
-        }}</template>
+        <template #description>{{ fonts.settingsBrowserDescription }}</template>
         <SettingsGroup>
           <SettingsRow
             :label="fonts.systemFontAccess"
@@ -116,50 +98,6 @@ onMounted(() => {
               :disabled="busyAction !== null || !online"
               @update:model-value="setFontProviderEnabled(provider, $event)"
             />
-          </SettingsRow>
-        </SettingsGroup>
-      </SettingsSection>
-
-      <SettingsSection v-if="desktop">
-        <template #title>{{ fonts.downloadedCache }}</template>
-        <SettingsGroup>
-          <SettingsRow
-            :label="`${fonts.cachedFontCount(cacheCount)} · ${cacheSize}`"
-            :description="`${common.lastUpdated}: ${cacheUpdatedLabel}`"
-          >
-            <span class="flex gap-2">
-              <AppButton
-                variant="outline"
-                data-test-id="font-settings-refresh-cache"
-                :disabled="busyAction !== null"
-                @click="refreshSummary"
-              >
-                {{ common.refresh }}
-              </AppButton>
-              <AppButton
-                variant="outline"
-                data-test-id="font-settings-clear-cache"
-                :loading="busyAction === 'clear'"
-                :disabled="busyAction !== null || cacheCount === 0"
-                @click="clearCache"
-              >
-                {{ fonts.clearCache }}
-              </AppButton>
-            </span>
-          </SettingsRow>
-          <SettingsRow
-            :label="fonts.fallbackPacks"
-            :description="fonts.downloadFallbackPacksDescription"
-          >
-            <AppButton
-              variant="outline"
-              data-test-id="font-settings-download-fallbacks"
-              :loading="busyAction === 'download'"
-              :disabled="busyAction !== null"
-              @click="downloadFallbacks"
-            >
-              {{ common.download }}
-            </AppButton>
           </SettingsRow>
         </SettingsGroup>
       </SettingsSection>

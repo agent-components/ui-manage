@@ -5,13 +5,11 @@ import { ReadOnlyDocumentError } from "@open-pencil/core";
 import { createRetainedScopePlugin } from "@open-pencil/vue/lifecycle/retention";
 
 import "./app.css";
-import { installNativeFigArchives } from "@/app/document/io/native-fig";
 import { preloadCanvasKit } from "@/app/editor/canvas/canvaskit";
 import { preloadFonts } from "@/app/editor/fonts";
 import { registerInterfaceFont } from "@/app/editor/fonts/interface";
 import { observeBootErrors } from "@/app/shell/support/boot";
 import { reportBootFailure } from "@/app/shell/support/gate";
-import { IS_TAURI } from "@/constants";
 
 import App from "./App.vue";
 import router from "./router";
@@ -23,7 +21,6 @@ import router from "./router";
  */
 export async function boot(): Promise<void> {
   registerInterfaceFont();
-  if (IS_TAURI) installNativeFigArchives();
   preloadCanvasKit();
   preloadFonts();
   const head = createHead();
@@ -44,10 +41,8 @@ export async function boot(): Promise<void> {
     console.error(error);
   };
 
-  if (!IS_TAURI) {
-    void import("virtual:pwa-register").then(({ registerSW }) => {
-      registerSW({ immediate: true });
-      return undefined;
-    });
-  }
+  void import("virtual:pwa-register").then(({ registerSW }) => {
+    registerSW({ immediate: true });
+    return undefined;
+  });
 }

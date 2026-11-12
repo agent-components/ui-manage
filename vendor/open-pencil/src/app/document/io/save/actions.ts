@@ -4,10 +4,9 @@ import { filesMessages } from '@open-pencil/vue/i18n'
 import { downloadBlob } from '@/app/document/io/browser'
 import { isFileWriteRefused } from '@/app/document/io/capability'
 import { documentFileName, documentNameFromFigPath } from '@/app/document/io/names'
-import { chooseBrowserFigSaveHandle, chooseTauriFigSavePath } from '@/app/document/io/save/targets'
+import { chooseBrowserFigSaveHandle } from '@/app/document/io/save/targets'
 import type { DocumentSourceAccess } from '@/app/document/io/types'
 import { createDocumentWriter } from '@/app/document/io/write'
-import { IS_TAURI } from '@/constants'
 
 type SaveDocumentState = EditorState & { documentName: string }
 
@@ -42,8 +41,6 @@ export function createSaveActions({
   onDownloadSuccess
 }: SaveActionsOptions) {
   const writeFile = createDocumentWriter({
-    state,
-    getFilePath,
     getFileHandle,
     getStorageBinding,
     setSavedVersion,
@@ -78,22 +75,6 @@ export function createSaveActions({
 
   async function saveFigFileAs() {
     const { data, version } = await buildVersionedFigFile()
-
-    if (IS_TAURI) {
-      const path = await chooseTauriFigSavePath(state.documentKind)
-      if (!path) return false
-      setStorageBinding(null)
-      setFilePath(path)
-      setFileHandle(null)
-      state.documentName = documentNameFromFigPath(path)
-      const wrote = await writeFile(data, version)
-      if (wrote) {
-        setSourceIdentity({ handle: null, path })
-        // A file saved to disk is listed on Home like one opened from there.
-      }
-      startWatchingFile()
-      return wrote
-    }
 
     // The picker helper returns null when the browser has no File System Access API.
     const handle = await chooseBrowserFigSaveHandle(state.documentKind)

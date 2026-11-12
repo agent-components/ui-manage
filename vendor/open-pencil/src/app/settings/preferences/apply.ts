@@ -2,7 +2,6 @@ import type { SnappingPreferences } from "@open-pencil/core";
 
 import { getTabsSnapshot } from "@/app/tabs";
 
-import { syncNativeCommentsMenu, syncNativeSnappingMenu } from "./native-menu";
 import {
   appPreferences,
   updateCommentPreferences,
@@ -18,7 +17,7 @@ export function setSnappingPreference(
   applySnappingPreferences({ [preference]: enabled });
 }
 
-/** Stores snapping changes and pushes them to every open editor and the native menu. */
+/** Stores snapping changes and pushes them to every open editor. */
 export function applySnappingPreferences(
   changes: Partial<SnappingPreferences>
 ): void {
@@ -27,12 +26,6 @@ export function applySnappingPreferences(
   for (const tab of getTabsSnapshot()) {
     tab.store.state.snappingPreferences = { ...snapping };
   }
-  void syncNativeSnappingMenu(snapping).catch((error: unknown) => {
-    console.error(
-      "[Settings] Failed to synchronize native snapping preferences:",
-      error
-    );
-  });
 }
 
 export function setDesignCheckPreset(preset: DesignCheckPreset): void {
@@ -49,13 +42,7 @@ export function turnOnDesignCheckRules(): void {
   updateDesignCheckPreferences({ disabledRules: [] });
 }
 
-/** View → Comments: pins outside the Comment tool, here and in the native menu. */
+/** View → Comments: pins outside the Comment tool. */
 export function setCommentsOnCanvas(showOnCanvas: boolean): void {
   updateCommentPreferences({ showOnCanvas });
-  void syncNativeCommentsMenu(showOnCanvas).catch((error: unknown) => {
-    console.error(
-      "[Settings] Failed to synchronize the native comments menu:",
-      error
-    );
-  });
 }

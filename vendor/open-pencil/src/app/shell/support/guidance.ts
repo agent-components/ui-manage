@@ -19,11 +19,7 @@ export interface SupportLink {
 }
 
 export const SYSTEM_REQUIREMENTS_URL = 'https://openpencil.dev/getting-started#system-requirements'
-export const WEBVIEW2_DOWNLOAD_URL = 'https://developer.microsoft.com/microsoft-edge/webview2/'
 const ISSUE_URL = 'https://github.com/open-pencil/open-pencil/issues/new'
-
-export const MINIMUM_MACOS_VERSION = 13
-export const MINIMUM_WEBKITGTK_VERSION = '2.40'
 
 const BROWSER_LABELS = {
   chrome: 'Chrome',
@@ -39,37 +35,21 @@ export function requirementsSentence(): string {
   return `OpenPencil needs Chrome ${chrome}, Edge ${edge}, Firefox ${firefox}, or Safari ${safari} or later.`
 }
 
-function majorVersion(version: string | undefined): number | undefined {
-  if (!version) return undefined
-  const major = Number.parseInt(version, 10)
-  return Number.isFinite(major) ? major : undefined
-}
-
 function versionLabel(version: number): string {
   return Number.isInteger(version) ? String(version) : version.toFixed(1)
 }
 
 function environmentDetails(env: SupportEnvironment): string[] {
-  const details = [`Host: ${env.host === 'desktop' ? 'desktop app' : 'browser'}`]
-  details.push(`OS: ${env.os}${env.osVersion ? ` ${env.osVersion}` : ''}`)
+  const details = [`Host: browser`, `OS: ${env.os}`]
   if (env.browserVersion !== undefined) {
     details.push(`Browser: ${BROWSER_LABELS[env.browser]} ${versionLabel(env.browserVersion)}`)
   }
-  if (env.webviewVersion) details.push(`WebView: ${env.webviewVersion}`)
   details.push(`User agent: ${env.userAgent}`)
   return details
 }
 
-/** Option labels of the bug report form's Platform dropdown. */
-const DESKTOP_ISSUE_PLATFORMS: Partial<Record<SupportEnvironment['os'], string>> = {
-  macos: 'macOS (Tauri)',
-  windows: 'Windows (Tauri)',
-  linux: 'Linux (Tauri)'
-}
-
-function issuePlatform(env: SupportEnvironment): string {
-  if (env.host === 'browser') return 'Web (app.openpencil.dev)'
-  return DESKTOP_ISSUE_PLATFORMS[env.os] ?? 'Not sure'
+function issuePlatform(): string {
+  return 'Web (app.openpencil.dev)'
 }
 
 function issueLink(
@@ -80,7 +60,7 @@ function issueLink(
   const params = new URLSearchParams({
     template: 'bug_report.yml',
     title,
-    platform: issuePlatform(env),
+    platform: issuePlatform(),
     'affected-area': 'App UI',
     version: typeof __OPENPENCIL_APP_VERSION__ === 'string' ? __OPENPENCIL_APP_VERSION__ : '',
     browser: env.userAgent,
@@ -97,54 +77,6 @@ interface Advice {
   heading: string
   paragraphs: string[]
   extraLinks?: SupportLink[]
-}
-
-function desktopAdvice(env: SupportEnvironment): Advice {
-  switch (env.os) {
-    case 'macos': {
-      const major = majorVersion(env.osVersion)
-      const running = env.osVersion ? `This Mac is running macOS ${env.osVersion}. ` : ''
-      if (major !== undefined && major < MINIMUM_MACOS_VERSION) {
-        return {
-          heading: `OpenPencil needs macOS ${MINIMUM_MACOS_VERSION} or later`,
-          paragraphs: [
-            `${running}OpenPencil renders with the WebKit engine that ships with macOS, and this version is too old to run it. Upgrade to macOS ${MINIMUM_MACOS_VERSION} or later to use OpenPencil.`
-          ]
-        }
-      }
-      return {
-        heading: 'Update macOS to run OpenPencil',
-        paragraphs: [
-          `${running}OpenPencil renders with the WebKit engine that ships with macOS, and this Mac's copy is older than Safari ${BROWSER_BASELINE.safari}.`,
-          'Open System Settings → General → Software Update, install the available macOS and Safari updates, then reopen OpenPencil.'
-        ]
-      }
-    }
-    case 'linux':
-      return {
-        heading: 'Update WebKitGTK to run OpenPencil',
-        paragraphs: [
-          `OpenPencil renders with WebKitGTK${env.webviewVersion ? ` ${env.webviewVersion}` : ''}, which is too old.`,
-          `Update the webkit2gtk-4.1 package to ${MINIMUM_WEBKITGTK_VERSION} or later with your distribution's package manager, then reopen OpenPencil.`
-        ]
-      }
-    case 'windows':
-      return {
-        heading: 'Update WebView2 to run OpenPencil',
-        paragraphs: [
-          `OpenPencil renders with the Microsoft Edge WebView2 Runtime${env.webviewVersion ? ` ${env.webviewVersion}` : ''}, which is too old.`,
-          'Install the latest Evergreen runtime from Microsoft, then reopen OpenPencil.'
-        ],
-        extraLinks: [{ label: 'Download WebView2', url: WEBVIEW2_DOWNLOAD_URL }]
-      }
-    default:
-      return {
-        heading: 'OpenPencil needs a newer WebView',
-        paragraphs: [
-          'The system WebView engine is too old to run OpenPencil. Install your operating system updates, then reopen OpenPencil.'
-        ]
-      }
-  }
 }
 
 function browserUpdateSteps(env: SupportEnvironment): string {
@@ -214,7 +146,7 @@ export function unsupportedNotice(
   const details = [`Missing: ${missing.join(', ')}`, ...environmentDetails(env)]
   const report = issueLink(env, 'bug: unsupported browser notice shown', details)
 
-  if (env.host === 'browser' && claimsSupportedVersion(env)) {
+  if (claimsSupportedVersion(env)) {
     return {
       heading: 'A required browser feature is unavailable',
       paragraphs: [
@@ -226,7 +158,7 @@ export function unsupportedNotice(
     }
   }
 
-  const advice = env.host === 'desktop' ? desktopAdvice(env) : browserAdvice(env)
+  const advice = browserAdvice(env)
   return {
     heading: advice.heading,
     paragraphs: advice.paragraphs,
@@ -246,12 +178,8 @@ function errorDetails(error: unknown): string[] {
   return [summary, ...frames]
 }
 
-function bootFailureHint(env: SupportEnvironment): string {
-  if (env.host === 'browser') return requirementsSentence()
-  if (env.os === 'macos') {
-    return 'OpenPencil renders with the WebKit engine that ships with macOS. If this Mac has pending macOS or Safari updates, install them first.'
-  }
-  return 'OpenPencil renders with the system WebView engine. If your operating system has pending updates, install them first.'
+function bootFailureHint(): string {
+  return requirementsSentence()
 }
 
 /** Notice for an app that failed while loading and left the window blank. */
@@ -261,7 +189,7 @@ export function bootFailureNotice(env: SupportEnvironment, error: unknown): Supp
     heading: "OpenPencil couldn't start",
     paragraphs: [
       'Something failed while the app was loading, so nothing could be shown.',
-      bootFailureHint(env),
+      bootFailureHint(),
       'If it keeps happening, report the problem and include the details below.'
     ],
     details,

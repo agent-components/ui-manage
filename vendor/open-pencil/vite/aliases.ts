@@ -54,7 +54,7 @@ export function createOpenPencilAliases(rootDir: string) {
       replacement: removed("empty.ts"),
     },
 
-    // Removed npm packages → shims (cloud/mcp/mermaid/ai/tauri not in runtime)
+    // Removed npm packages → shims (cloud/mcp/mermaid/ai not in runtime)
     {
       find: /^@open-pencil\/cloud\/client$/,
       replacement: removed("cloud/client.ts"),
@@ -101,62 +101,6 @@ export function createOpenPencilAliases(rootDir: string) {
     {
       find: /^@ai-sdk\/vue$/,
       replacement: removed("ai-sdk/vue.ts"),
-    },
-    {
-      find: /^@tauri-apps\/api\/core$/,
-      replacement: removed("tauri/api-core.ts"),
-    },
-    {
-      find: /^@tauri-apps\/api\/event$/,
-      replacement: removed("tauri/api-event.ts"),
-    },
-    {
-      find: /^@tauri-apps\/api\/path$/,
-      replacement: removed("tauri/api-path.ts"),
-    },
-    {
-      find: /^@tauri-apps\/api\/window$/,
-      replacement: removed("tauri/api-window.ts"),
-    },
-    {
-      find: /^@tauri-apps\/api\/webviewWindow$/,
-      replacement: removed("tauri/api-webviewWindow.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-clipboard-manager$/,
-      replacement: removed("tauri/plugin-clipboard.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-dialog$/,
-      replacement: removed("tauri/plugin-dialog.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-fs$/,
-      replacement: removed("tauri/plugin-fs.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-notification$/,
-      replacement: removed("tauri/plugin-notification.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-os$/,
-      replacement: removed("tauri/plugin-os.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-process$/,
-      replacement: removed("tauri/plugin-process.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-shell$/,
-      replacement: removed("tauri/plugin-shell.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-updater$/,
-      replacement: removed("tauri/plugin-updater.ts"),
-    },
-    {
-      find: /^@tauri-apps\/plugin-opener$/,
-      replacement: removed("tauri/plugin-opener.ts"),
     },
     {
       find: /^@posthog\/core\/error-tracking$/,

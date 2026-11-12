@@ -17,7 +17,6 @@ import {
 import { appRuntimeConfig } from '@/app/runtime/config'
 import { useDocumentDrop } from '@/app/shell/document-drop'
 import { useKeyboard } from '@/app/shell/keyboard/use'
-import { useEditorMenu } from '@/app/shell/menu/use'
 import { toast } from '@/app/shell/ui'
 import {
   activeTab,
@@ -73,13 +72,12 @@ function openFirstTab(): Tab {
   if (uiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
     markSharePreview()
   }
-  // Need a store before useKeyboard/useEditorMenu; ui-manage bridge reuses this blank tab.
+  // Need a store before useKeyboard; ui-manage bridge reuses this blank tab.
   activeTab.value ?? openFirstTab()
 }
 
 useHead({ title: undefined })
 useKeyboard()
-useEditorMenu()
 useDocumentDrop()
 
 useEventListener(

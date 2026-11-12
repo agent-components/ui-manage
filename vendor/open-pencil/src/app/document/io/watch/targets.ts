@@ -1,26 +1,7 @@
-import { watch as tauriWatch } from '@tauri-apps/plugin-fs'
 import { useIntervalFn } from '@vueuse/core'
 
 const RECENT_WRITE_MS = 1000
 const BROWSER_POLL_MS = 2000
-const TAURI_WATCH_DELAY_MS = 500
-
-export async function watchTauriFile(
-  filePath: string,
-  getLastWriteTime: () => number,
-  reloadFromDisk: () => void
-) {
-  const unwatch = await tauriWatch(
-    filePath,
-    (event) => {
-      if (typeof event.type !== 'object' || !('modify' in event.type)) return
-      if (Date.now() - getLastWriteTime() < RECENT_WRITE_MS) return
-      reloadFromDisk()
-    },
-    { delayMs: TAURI_WATCH_DELAY_MS }
-  )
-  return () => unwatch()
-}
 
 export async function watchBrowserFile(
   fileHandle: FileSystemFileHandle,

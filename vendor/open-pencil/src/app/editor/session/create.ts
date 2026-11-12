@@ -12,7 +12,6 @@ import {
   setActiveEditorStore,
   useEditorStore,
 } from "@/app/editor/active-store";
-import { resolveFigmaClipboardImages } from "@/app/editor/clipboard/figma-images";
 import { bindClipboardNotifications } from "@/app/editor/clipboard/notifications";
 import { loadFont } from "@/app/editor/fonts";
 import { appIcons } from "@/app/editor/icons/provider";
@@ -39,7 +38,7 @@ import {
 import { notificationMessages } from "@/app/i18n/notifications";
 import { createDeferred } from "@/app/runtime/deferred";
 import { toast } from "@/app/shell/ui";
-import { IS_BROWSER, IS_TAURI } from "@/constants";
+import { IS_BROWSER } from "@/constants";
 
 export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from "@open-pencil/core";
 export type { EditorToolDef as ToolDef, Tool } from "@open-pencil/core";
@@ -58,9 +57,6 @@ function buildEditorStore(initialGraph?: SceneGraph) {
     loadFont,
     icons: appIcons,
     shaderRasterizer: createShaderRasterizer(),
-    resolveFigmaClipboardImages: IS_TAURI
-      ? resolveFigmaClipboardImages
-      : undefined,
     skipInitialGraphSetup: !!initialGraph,
     getUserName: () => currentUserName(),
     getViewportSize: () =>

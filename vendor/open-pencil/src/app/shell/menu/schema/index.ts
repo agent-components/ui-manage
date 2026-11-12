@@ -13,7 +13,7 @@ export type {
   AppMenuGroupSchema
 } from './types'
 
-/** Settings…, where each platform expects it: the macOS application menu, otherwise File. */
+/** Settings… in the File menu. */
 const SETTINGS_MENU_ITEM = {
   id: 'settings',
   label: 'Settings…',
@@ -29,7 +29,6 @@ export const APP_MENU_SCHEMA = [
       { id: 'new', label: 'New Design', shortcut: 'MOD+N' },
       { id: 'new-tab', label: 'New Tab', shortcut: 'MOD+T' },
       { id: 'open', label: 'Open…', shortcut: 'MOD+O' },
-      { id: 'open-recent', label: 'Open Recent', target: 'native' },
       { type: 'separator' },
       { id: 'save', feature: 'document', label: 'Save', shortcut: 'MOD+S' },
       { id: 'save-as', feature: 'document', label: 'Save As…', shortcut: 'MOD+SHIFT+S' },
@@ -267,13 +266,7 @@ export const APP_MENU_SCHEMA = [
       { id: 'toggle-ui', feature: 'document', label: 'Toggle UI', shortcut: 'MOD+\\' },
       { id: 'toggle-preview', feature: 'document', label: 'Preview', shortcut: 'MOD+ALT+↩' },
       { type: 'separator' },
-      { id: 'profiler', label: 'Profiler', checkbox: true, target: 'browser' },
-      {
-        id: 'dev-tools',
-        label: 'Developer Tools',
-        accelerator: 'CmdOrCtrl+Alt+I',
-        target: 'native'
-      }
+      { id: 'profiler', label: 'Profiler', checkbox: true, target: 'browser' }
     ]
   },
   {
@@ -528,16 +521,3 @@ export const APP_MENU_SCHEMA = [
     ]
   }
 ] satisfies AppMenuGroupSchema[]
-
-/**
- * Custom entries in the macOS application menu.
- *
- * Placement stays in Rust because the OS-predefined items (About, Services, Hide)
- * sit between them. Only the labels and accelerators are shared here.
- */
-export const APP_MENU_APP_ITEMS = [
-  { id: 'about', label: 'About OpenPencil' },
-  { id: 'check-updates', label: 'Check for Updates…' },
-  SETTINGS_MENU_ITEM,
-  { id: 'quit', label: 'Quit OpenPencil', shortcut: 'MOD+Q' }
-] satisfies AppMenuActionItem[]

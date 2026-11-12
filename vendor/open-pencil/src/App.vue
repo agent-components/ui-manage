@@ -17,7 +17,6 @@ import { interfaceScalePreference } from '@/app/shell/interface-scale'
 import { animationsEnabled } from '@/app/shell/motion'
 import { useAppTheme } from '@/app/shell/theme'
 import { toast } from '@/app/shell/ui'
-import { useRestartApprovals } from '@/app/shell/updater/approvals'
 import { prepareForReload } from '@/app/tabs'
 import UnsavedChangesDialog from '@/components/document/UnsavedChangesDialog.vue'
 import PublishLibraryDialog from '@/components/libraries/PublishLibraryDialog.vue'
@@ -43,7 +42,6 @@ useHead({
 provideEditor(useFollowingEditorStore())
 useAppTheme()
 useDocumentCloseProtection()
-useRestartApprovals()
 startRecoverySession()
 useEventListener(window, 'pagehide', () => {
   void prepareForReload()

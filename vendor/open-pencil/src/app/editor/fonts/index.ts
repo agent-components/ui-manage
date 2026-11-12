@@ -64,16 +64,6 @@ export async function requestLocalFontAccess(): Promise<FontFamilyOption[]> {
   return listFamilies()
 }
 
-export async function downloadedFontCacheSummary() {
-  return { count: 0, byteLength: 0, updatedAt: null }
-}
-
-export async function clearDownloadedFontCache(): Promise<void> {}
-
-export async function predownloadFallbackFonts() {
-  return fontManager.ensureFallbackPack()
-}
-
 export async function listFamilies(): Promise<FontFamilyOption[]> {
   return fontManager.listFamilyOptions()
 }

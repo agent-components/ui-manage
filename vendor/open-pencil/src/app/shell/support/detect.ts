@@ -4,16 +4,11 @@ export type BrowserFamily = 'chrome' | 'edge' | 'opera' | 'firefox' | 'safari' |
 export type OperatingSystem = 'macos' | 'ios' | 'windows' | 'linux' | 'android' | 'unknown'
 
 export interface SupportEnvironment {
-  /** Whether the page runs inside the Tauri desktop shell or a browser tab. */
-  readonly host: 'desktop' | 'browser'
+  readonly host: 'browser'
   readonly os: OperatingSystem
-  /** Operating system version, known only on desktop through the OS plugin. */
-  readonly osVersion?: string
   readonly browser: BrowserFamily
   /** Major version, with the minor kept for Safari (`16.4`), when the UA names it. */
   readonly browserVersion?: number
-  /** Native WebView engine version reported by Tauri, when available. */
-  readonly webviewVersion?: string
   readonly userAgent: string
 }
 
@@ -21,13 +16,6 @@ export interface SupportEnvironment {
 export interface NavigatorFacts {
   readonly userAgent: string
   readonly maxTouchPoints: number
-}
-
-/** Facts only the desktop shell can supply. */
-export interface DesktopFacts {
-  readonly platform: string
-  readonly osVersion?: string
-  readonly webviewVersion?: string
 }
 
 interface ParsedUserAgent {
@@ -92,41 +80,9 @@ export function parseUserAgent(userAgent: string, maxTouchPoints = 0): ParsedUse
   return { os, browser: 'unknown' }
 }
 
-function desktopOS(platform: string, fallback: OperatingSystem): OperatingSystem {
-  switch (platform) {
-    case 'macos':
-      return 'macos'
-    case 'windows':
-      return 'windows'
-    case 'linux':
-      return 'linux'
-    case 'ios':
-      return 'ios'
-    case 'android':
-      return 'android'
-    default:
-      return fallback
-  }
-}
-
-export function describeEnvironment(
-  navigatorFacts: NavigatorFacts,
-  desktop?: DesktopFacts
-): SupportEnvironment {
+export function describeEnvironment(navigatorFacts: NavigatorFacts): SupportEnvironment {
   const parsed = parseUserAgent(navigatorFacts.userAgent, navigatorFacts.maxTouchPoints)
-  if (!desktop) {
-    return { host: 'browser', ...parsed, userAgent: navigatorFacts.userAgent }
-  }
-  return {
-    host: 'desktop',
-    os: desktopOS(desktop.platform, parsed.os),
-    osVersion: desktop.osVersion,
-    // The WebView UA carries no engine version; the shell reports it natively.
-    browser: parsed.browser,
-    browserVersion: parsed.browserVersion,
-    webviewVersion: desktop.webviewVersion,
-    userAgent: navigatorFacts.userAgent
-  }
+  return { host: 'browser', ...parsed, userAgent: navigatorFacts.userAgent }
 }
 
 /** Which baseline entry governs an environment, or `undefined` when none does. */

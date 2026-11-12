@@ -8,37 +8,24 @@ import type {
 import { useI18n } from '@open-pencil/vue/i18n'
 
 import {
-  clearDownloadedFontCache,
-  downloadedFontCacheSummary,
   fontProviderSettings,
   localFontAccessState,
   onlineFontsEnabled,
-  predownloadFallbackFonts,
   requestLocalFontAccess,
   type FontProviderSettings
 } from '@/app/editor/fonts'
-import type { DownloadedFontCacheSummary } from '@/app/editor/fonts/cache'
-import { useDateFormat } from '@/app/i18n/date'
-
-type FontCacheSummary = DownloadedFontCacheSummary
 
 export interface FontSettingsActions {
-  clearDownloadedFontCache: () => Promise<void>
-  downloadedFontCacheSummary: () => Promise<FontCacheSummary>
   localFontAccessState: () => LocalFontAccessState
-  predownloadFallbackFonts: () => Promise<unknown>
   requestLocalFontAccess: () => Promise<string[] | FontFamilyOption[]>
   onlineFontsEnabled: { value: boolean }
   fontProviderSettings: { value: FontProviderSettings }
 }
 
-export type FontSettingsBusyAction = 'access' | 'download' | 'clear' | 'refresh'
+export type FontSettingsBusyAction = 'access'
 
 const defaultActions: FontSettingsActions = {
-  clearDownloadedFontCache,
-  downloadedFontCacheSummary,
   localFontAccessState,
-  predownloadFallbackFonts,
   requestLocalFontAccess,
   onlineFontsEnabled,
   fontProviderSettings
@@ -46,10 +33,6 @@ const defaultActions: FontSettingsActions = {
 
 export function useFontSettings(actions: FontSettingsActions = defaultActions) {
   const { common, fonts } = useI18n()
-  const dates = useDateFormat()
-  const cacheCount = ref(0)
-  const cacheByteLength = ref(0)
-  const cacheUpdatedAt = ref<number | null>(null)
   const accessState = ref(actions.localFontAccessState())
   const busyAction = ref<FontSettingsBusyAction | null>(null)
   const status = ref('')
@@ -63,32 +46,9 @@ export function useFontSettings(actions: FontSettingsActions = defaultActions) {
     return common.value.notRequested
   })
 
-  const cacheSize = computed(() => {
-    if (cacheByteLength.value === 0) return '0 MB'
-    return `${(cacheByteLength.value / 1024 / 1024).toFixed(1)} MB`
-  })
-
-  const cacheUpdatedLabel = computed(() => {
-    if (cacheUpdatedAt.value === null) return common.value.never
-    return dates.format(cacheUpdatedAt.value, 'date')
-  })
-
   const canRequestLocalFonts = computed(
     () => accessState.value === 'prompt' || accessState.value === 'denied'
   )
-
-  async function refreshSummary() {
-    busyAction.value = busyAction.value ?? 'refresh'
-    try {
-      const summary = await actions.downloadedFontCacheSummary()
-      cacheCount.value = summary.count
-      cacheByteLength.value = summary.byteLength
-      cacheUpdatedAt.value = summary.updatedAt
-      accessState.value = actions.localFontAccessState()
-    } finally {
-      if (busyAction.value === 'refresh') busyAction.value = null
-    }
-  }
 
   async function requestAccess() {
     busyAction.value = 'access'
@@ -119,48 +79,14 @@ export function useFontSettings(actions: FontSettingsActions = defaultActions) {
       : fonts.value.providerDisabled({ provider })
   }
 
-  async function downloadFallbacks() {
-    busyAction.value = 'download'
-    status.value = ''
-    try {
-      await actions.predownloadFallbackFonts()
-      await refreshSummary()
-      status.value = fonts.value.fallbackDownloaded
-    } catch {
-      status.value = fonts.value.fallbackDownloadFailed
-    } finally {
-      busyAction.value = null
-    }
-  }
-
-  async function clearCache() {
-    busyAction.value = 'clear'
-    status.value = ''
-    try {
-      await actions.clearDownloadedFontCache()
-      await refreshSummary()
-      status.value = fonts.value.downloadedFontCacheCleared
-    } catch {
-      status.value = fonts.value.downloadedFontCacheClearFailed
-    } finally {
-      busyAction.value = null
-    }
-  }
-
   return {
     accessState,
     accessStateLabel,
     busyAction,
     canRequestLocalFonts,
-    cacheCount,
-    cacheSize,
-    cacheUpdatedLabel,
     status,
     onlineFontsEnabled,
     fontProviderSettings,
-    clearCache,
-    downloadFallbacks,
-    refreshSummary,
     requestAccess,
     setOnlineFontsEnabled,
     setFontProviderEnabled

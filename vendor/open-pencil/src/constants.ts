@@ -1,8 +1,7 @@
-import { IS_BROWSER, IS_TAURI } from "@open-pencil/core/constants";
+import { IS_BROWSER } from "@open-pencil/core/constants";
 
 export {
   IS_BROWSER,
-  IS_TAURI,
   SELECTION_COLOR,
   COMPONENT_COLOR,
   SNAP_COLOR,
@@ -80,9 +79,6 @@ export const ROOM_STATUS_TICK_MS = 500;
 export const WEB_APP_ORIGIN = "https://app.openpencil.dev";
 /** The privacy page: every request the app makes, and every usage event and field. */
 export const PRIVACY_URL = "https://openpencil.dev/overview/privacy";
-/** Where the desktop app's installers are published. */
-export const DESKTOP_DOWNLOAD_URL =
-  "https://github.com/open-pencil/open-pencil/releases/latest";
 export const NODE_DOWNLOAD_URL = "https://nodejs.org/en/download";
 
 /**
@@ -96,14 +92,8 @@ export const MCP_CONNECTIONS_DOCS_URL = `${DOCS_ORIGIN}/programmable/ai-chat#ext
 export const CODING_AGENTS_GUIDE_URL = `${DOCS_ORIGIN}/programmable/coding-agents`;
 export const PI_GUIDE_URL = `${CODING_AGENTS_GUIDE_URL}#pi`;
 
-/** The published release page, with its full notes, for a desktop version. */
-export function releaseNotesURL(version: string): string {
-  return `https://github.com/open-pencil/open-pencil/releases/tag/v${version}`;
-}
-
 export function getShareURL(roomId: string): string {
-  const base =
-    IS_TAURI || !IS_BROWSER ? WEB_APP_ORIGIN : window.location.origin;
+  const base = !IS_BROWSER ? WEB_APP_ORIGIN : window.location.origin;
   return `${base}/rooms/${roomId}`;
 }
 

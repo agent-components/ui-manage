@@ -116,8 +116,6 @@ export function createEditorStoreModules(
     discardRecovery: documentIO.discardRecovery,
     setDocumentSource: documentIO.setDocumentSource,
     setStorageDocumentSource: documentIO.setStorageDocumentSource,
-    setPlannedFilePath: documentIO.setPlannedFilePath,
-    saveFigFileToPath: documentIO.saveFigFileToPath,
     saveFigFileCopy: documentIO.saveFigFileCopy,
     startWatchingCurrentFile: documentIO.startWatchingCurrentFile,
     designCheck,

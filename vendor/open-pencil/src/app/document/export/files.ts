@@ -1,5 +1,3 @@
-import { save } from '@tauri-apps/plugin-dialog'
-import { writeFile as tauriWrite } from '@tauri-apps/plugin-fs'
 import { zipSync, type Zippable } from 'fflate'
 import { extname } from 'pathe'
 
@@ -15,7 +13,6 @@ import type { SceneGraph } from '@open-pencil/scene-graph'
 
 import type { ExportOptions } from '@/app/document/export/types'
 import { pickBrowserSaveFile, supportsFileSystemAccess } from '@/app/document/io/capability'
-import { IS_TAURI } from '@/constants'
 
 type ExportData = string | ArrayBuffer | Uint8Array
 
@@ -135,17 +132,6 @@ export function createExportTargetActions(editor: Editor, state: EditorState, io
   return { renderExportImage, getSelectionExportTarget, listSelectionExportFormats }
 }
 
-export async function chooseTauriExportPath(fileName: string, format: string, ext: string) {
-  return save({
-    defaultPath: fileName,
-    filters: [{ name: format, extensions: [ext.slice(1)] }]
-  })
-}
-
-export async function writeTauriExportFile(path: string, data: Uint8Array) {
-  await tauriWrite(path, data)
-}
-
 /** Saves an exported file and reports whether it was saved; `false` means the person cancelled. */
 export async function saveExportedFile(
   data: Uint8Array,
@@ -155,13 +141,6 @@ export async function saveExportedFile(
   mime: string,
   downloadBlob: DownloadBlob
 ): Promise<boolean> {
-  if (IS_TAURI) {
-    const path = await chooseTauriExportPath(fileName, format, ext)
-    if (!path) return false
-    await writeTauriExportFile(path, data)
-    return true
-  }
-
   if (supportsFileSystemAccess()) {
     try {
       const handle = await pickBrowserSaveFile({

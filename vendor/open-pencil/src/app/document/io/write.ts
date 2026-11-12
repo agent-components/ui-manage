@@ -1,13 +1,6 @@
-import { writeFile as tauriWrite } from "@tauri-apps/plugin-fs";
-
 import type { StorageDocumentBinding } from "@/app/document/io/storage-binding";
-import { IS_TAURI } from "@/constants";
-
-type WriteDocumentState = { documentName: string };
 
 type DocumentWriterOptions = {
-  state: WriteDocumentState;
-  getFilePath: () => string | null;
   getFileHandle: () => FileSystemFileHandle | null;
   getStorageBinding: () => StorageDocumentBinding | null;
   setSavedVersion: (version: number) => void;
@@ -16,8 +9,6 @@ type DocumentWriterOptions = {
 };
 
 export function createDocumentWriter({
-  state: _state,
-  getFilePath,
   getFileHandle,
   getStorageBinding,
   setSavedVersion,
@@ -42,12 +33,7 @@ export function createDocumentWriter({
     // Client object-storage bindings are removed; ui-manage persists via bridge saveFigFileCopy.
     if (getStorageBinding()) return false;
 
-    const filePath = getFilePath();
     const fileHandle = getFileHandle();
-    if (filePath && IS_TAURI) {
-      await tauriWrite(filePath, data);
-      return await finishWrite(version);
-    }
     if (fileHandle) {
       const writable = await fileHandle.createWritable();
       await writable.write(new Uint8Array(data));

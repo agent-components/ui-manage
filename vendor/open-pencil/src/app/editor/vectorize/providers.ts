@@ -177,7 +177,7 @@ async function fetchSVGFromURL(providerID: VectorizeProviderID, rawURL: string):
   } catch (error) {
     if (error instanceof VectorizeTimeoutError) throw error
     if (error instanceof Error && error.message === 'Vectorized SVG is too large') throw error
-    throw new Error('Vectorized SVG could not be downloaded. Try again or use the desktop app.')
+    throw new Error('Vectorized SVG could not be downloaded. Try again.')
   }
   if (!response.ok) throw new Error(`Failed to download vectorized SVG (${response.status})`)
   if (response.url) validateVectorizedAssetURL(providerID, response.url)

@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { useEventListener } from '@vueuse/core'
 import { ref, toRaw } from 'vue'
 
@@ -6,7 +5,6 @@ import { ReadOnlyDocumentError } from '@open-pencil/core'
 
 import type { ProgressAmount } from '@/components/ui/feedback/progress'
 import type { ToastVariant } from '@/components/ui/feedback/toast'
-import { IS_TAURI } from '@/constants'
 
 export type { ToastVariant } from '@/components/ui/feedback/toast'
 
@@ -178,15 +176,6 @@ export const toast = {
   ERROR_TOAST_DURATION
 }
 
-export async function openExternalLink(url: string) {
-  if (IS_TAURI) {
-    // An app command, so native tests can read the address instead of opening a browser.
-    await invoke('open_external_url', { url })
-  } else {
-    window.open(url, '_blank')
-  }
-}
-export function decodeTauriStderr(raw: Uint8Array | number[] | string): string {
-  if (typeof raw === 'string') return raw
-  return new TextDecoder().decode(raw instanceof Uint8Array ? raw : new Uint8Array(raw))
+export function openExternalLink(url: string) {
+  window.open(url, '_blank')
 }

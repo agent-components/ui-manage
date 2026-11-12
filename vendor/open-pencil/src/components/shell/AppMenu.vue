@@ -52,7 +52,6 @@ import { useScrollOverflow } from '@/components/ui/list/useScrollOverflow'
 import AppShortcutText from '@/components/ui/menu/AppShortcutText.vue'
 import { useMenuUI } from '@/components/ui/menu/menu'
 import MenuScrollArea from '@/components/ui/menu/MenuScrollArea.vue'
-import { IS_TAURI } from '@/constants'
 
 const store = useEditorStore()
 const route = useRoute()
@@ -167,7 +166,7 @@ const { overflowStart, overflowEnd, scrollTowardHidden } = useScrollOverflow(men
       v-model:open="shareOpen"
       :design-id="designId"
     />
-    <div v-if="!IS_TAURI" class="flex items-center px-1 pb-1">
+    <div class="flex items-center px-1 pb-1">
       <div
         ref="menubar"
         class="scrollbar-none min-w-0 flex-1 overflow-x-auto data-overflow-end:mask-r-from-[calc(100%-2rem)] data-overflow-start:mask-l-from-[calc(100%-2rem)]"

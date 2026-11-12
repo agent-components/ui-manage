@@ -40,7 +40,6 @@ export function createDocumentIOActions(
     preparationController,
   });
   const { startWatchingFile, stopWatchingFile } = createFileWatcher({
-    getFilePath: sourceState.getFilePath,
     getFileHandle: sourceState.getFileHandle,
     getLastWriteTime: sourceState.getLastWriteTime,
     reloadFromDisk: () => {
@@ -89,8 +88,6 @@ export function createDocumentIOActions(
     discardRecovery: sourceActions.discardRecovery,
     setDocumentSource: sourceActions.setDocumentSource,
     setStorageDocumentSource: sourceActions.setStorageDocumentSource,
-    setPlannedFilePath: sourceActions.setPlannedFilePath,
-    saveFigFileToPath: sourceActions.saveFigFileToPath,
     saveFigFileCopy: sourceActions.saveFigFileCopy,
     startWatchingCurrentFile: sourceActions.startWatchingCurrentFile,
     disposeDocumentIO: sourceActions.disposeDocumentIO,

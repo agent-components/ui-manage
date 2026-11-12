@@ -1,5 +1,3 @@
-import { save } from '@tauri-apps/plugin-dialog'
-
 import { DOCUMENT_EXTENSIONS } from '@open-pencil/core/io'
 import type { DocumentKind } from '@open-pencil/scene-graph'
 
@@ -10,13 +8,6 @@ import { documentFileName } from '@/app/document/io/names'
 const FILE_TYPE_NAMES: Readonly<Record<DocumentKind, string>> = {
   design: 'Figma file',
   board: 'FigJam board'
-}
-
-export async function chooseTauriFigSavePath(kind: DocumentKind) {
-  return save({
-    defaultPath: documentFileName('Untitled', kind),
-    filters: [{ name: FILE_TYPE_NAMES[kind], extensions: [DOCUMENT_EXTENSIONS[kind]] }]
-  })
 }
 
 export async function chooseBrowserFigSaveHandle(kind: DocumentKind) {
