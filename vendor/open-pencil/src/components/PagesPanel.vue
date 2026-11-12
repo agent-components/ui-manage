@@ -16,9 +16,6 @@ import { useI18n } from '@open-pencil/vue/i18n'
 import { PageListRoot } from '@open-pencil/vue/primitives/PageList'
 import { useFlatReorderDrag } from '@open-pencil/vue/shared/drag'
 
-import { useActiveEditorStoreRef } from '@/app/editor/active-store'
-import { appPreferences } from '@/app/settings/preferences/store'
-import PageIssueBadge from '@/components/design-check/PageIssueBadge.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
 import { useMenuUI } from '@/components/ui/menu/menu'
 import MenuScrollArea from '@/components/ui/menu/MenuScrollArea.vue'
@@ -41,14 +38,6 @@ const menuCls = useMenuUI({
 })
 const pageListStyles = tv(pageListTheme)
 const baseStyles = pageListStyles()
-
-const storeRef = useActiveEditorStoreRef()
-
-/** Errors and warnings per page, following the View → Design issues toggle like the markers. */
-function pageIssues(pageId: string) {
-  if (!appPreferences.value.designCheck.showOnCanvas) return null
-  return storeRef.value?.designCheck.pages.counts.value.get(pageId) ?? null
-}
 
 const pageActions = ref<Pick<PageActions, 'rename'> | null>(null)
 const currentPages = ref<readonly PageItem[]>([])
@@ -157,9 +146,6 @@ function setupPageRowRef(
                 >
                   <icon-lucide-file :class="pageStyles(pg, currentPageId).icon()" />
                   <span :class="pageStyles(pg, currentPageId).label()">{{ pg.name }}</span>
-                  <span :class="pageStyles(pg, currentPageId).trailing()">
-                    <PageIssueBadge :counts="pageIssues(pg.id)" />
-                  </span>
                 </button>
                 <div
                   v-if="pageDropPosition(pg) === 'after'"

@@ -10,7 +10,6 @@ import { appPreferences, type DesignCheckPreset } from '@/app/settings/preferenc
 
 import {
   highlightForIssue,
-  markersForIssues,
   mostSevereIssue,
   toDesignIssues,
   type DesignIssue
@@ -33,7 +32,7 @@ function linterConfig(preset: DesignCheckPreset, disabledRules: readonly string[
 }
 
 /**
- * Keeps the current page checked while the Check panel is open or canvas markers are on.
+ * Keeps the current page checked while the Check panel is open.
  *
  * Checks run once edits settle and wait out interactive property edits, so a burst of changes
  * costs one check. Nothing runs while both surfaces are off.
@@ -51,9 +50,7 @@ export function createDesignCheck(editor: Editor, state: AppEditorState) {
 
   const preferences = computed(() => appPreferences.value.designCheck)
   // A board has no design lint, as FigJam has none.
-  const enabled = computed(
-    () => resolveEditorProfile(state).lint && (panelVisible.value || preferences.value.showOnCanvas)
-  )
+  const enabled = computed(() => resolveEditorProfile(state).lint && panelVisible.value)
   // Primitive keys keep unrelated preference changes, like toggling markers, from rebuilding rules.
   const preset = computed(() => preferences.value.preset)
   const disabledRules = computed(() => preferences.value.disabledRules.join('\n'))
@@ -70,9 +67,7 @@ export function createDesignCheck(editor: Editor, state: AppEditorState) {
   /** Set while the Lint panel lists the whole document, which needs every page checked. */
   const documentScope = ref(false)
   // Pages beyond the current one are checked for the page list and the Document scope.
-  const pagesNeeded = computed(
-    () => enabled.value && (preferences.value.showOnCanvas || documentScope.value)
-  )
+  const pagesNeeded = computed(() => enabled.value && documentScope.value)
   // Stopped in dispose, so it needs no effect scope of its own.
   const pages = createPageChecks({
     graph: () => editor.graph,
@@ -129,10 +124,7 @@ export function createDesignCheck(editor: Editor, state: AppEditorState) {
   }
 
   function publishMarkers() {
-    const current = snapshot.value
-    const show =
-      preferences.value.showOnCanvas && current !== null && current.pageId === state.currentPageId
-    editor.setDesignIssueMarkers(show ? markersForIssues(current.issues) : [])
+    editor.setDesignIssueMarkers([])
   }
 
   scope.run(() => {
@@ -184,7 +176,7 @@ export function createDesignCheck(editor: Editor, state: AppEditorState) {
       () => enabled.value && schedule()
     )
     // Immediate: the first check runs before this watcher exists, while `enabled` starts up.
-    watch([snapshot, () => preferences.value.showOnCanvas], publishMarkers, { immediate: true })
+    watch(snapshot, publishMarkers, { immediate: true })
   })
 
   const unsubscribeGraph = editor.onEditorEvent('graph:replaced', () => {

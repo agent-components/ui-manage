@@ -3,14 +3,10 @@ import { useI18n } from "@open-pencil/vue/i18n";
 import { requestAppExit } from "@/app/document/close/exit";
 import { useActiveEditorStoreRef } from "@/app/editor/active-store";
 import { openSettingsDialog } from "@/app/settings/dialog";
-import {
-  setDesignIssuesOnCanvas,
-  setSnappingPreference,
-} from "@/app/settings/preferences/apply";
+import { setSnappingPreference } from "@/app/settings/preferences/apply";
 import {
   followNativeCanvasViewMenu,
   syncNativeCommentsMenu,
-  syncNativeDesignIssuesMenu,
   syncNativeSnappingMenu,
 } from "@/app/settings/preferences/native-menu";
 import { appPreferences } from "@/app/settings/preferences/store";
@@ -49,15 +45,6 @@ export function useShellMenu() {
       );
     }
   );
-  void syncNativeDesignIssuesMenu(
-    appPreferences.value.designCheck.showOnCanvas
-  ).catch((error: unknown) => {
-    console.error(
-      "[Menu] Failed to synchronize the native design issues menu:",
-      error
-    );
-  });
-
   void syncNativeCommentsMenu(appPreferences.value.comments.showOnCanvas).catch(
     (error: unknown) => {
       console.error(
@@ -89,8 +76,6 @@ export function useShellMenu() {
       const current = appPreferences.value.editing.snapping.pixelGrid;
       setSnappingPreference("pixelGrid", !current);
     },
-    "view-design-issues": () =>
-      setDesignIssuesOnCanvas(!appPreferences.value.designCheck.showOnCanvas),
     "theme-light": () => setTheme("light"),
     "theme-dark": () => setTheme("dark"),
     "theme-auto": () => setTheme("auto"),

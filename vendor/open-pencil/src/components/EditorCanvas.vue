@@ -29,7 +29,6 @@ import type { ViewportTransform } from '@open-pencil/core/geometry'
 import { PlayIslands, useCanvasInput } from '@open-pencil/vue/canvas'
 import { useCanvasDrop } from '@open-pencil/vue/canvas/drop'
 import { useEyedropperLoupe } from '@open-pencil/vue/canvas/eyedropper'
-import { useCanvasIssueMarkers } from '@open-pencil/vue/canvas/issues'
 import { useCanvasVirtualReference } from '@open-pencil/vue/canvas/overlays'
 import { useCanvasStatusLabels } from '@open-pencil/vue/canvas/statuses'
 import { useCanvas } from '@open-pencil/vue/canvas/surface'
@@ -37,7 +36,6 @@ import { useTextEdit } from '@open-pencil/vue/canvas/text-edit'
 import { toolCursor } from '@open-pencil/vue/editor/tool-cursor'
 import { autoLayoutValueAnchor, type AutoLayoutValueField } from '@open-pencil/vue/shared/input'
 
-import { propertiesTab } from '@/app/shell/properties-tab'
 import { useEditorStore } from '@/app/editor/active-store'
 import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaboration-awareness'
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
@@ -47,7 +45,6 @@ import { appRuntimeConfig } from '@/app/runtime/config'
 import { appPreferences } from '@/app/settings/preferences/store'
 import CanvasEyedropperLoupe from '@/components/canvas/CanvasEyedropperLoupe.vue'
 import CommentsLayer from '@/components/comments/CommentsLayer.vue'
-import IssueMarkerTooltip from '@/components/design-check/IssueMarkerTooltip.vue'
 import PreparationOverlay from '@/components/preparation/canvas/PreparationOverlay.vue'
 import StatusLabelMenu from '@/components/statuses/StatusLabelMenu.vue'
 import AppDropOverlay from '@/components/ui/feedback/AppDropOverlay.vue'
@@ -142,7 +139,6 @@ const {
   hitTestSectionTitle,
   hitTestComponentLabel,
   hitTestFrameTitle,
-  hitTestIssueMarker,
   hitTestStatusLabel
 } = useCanvas(canvasRef, store, {
   layer: 'overlays',
@@ -201,22 +197,6 @@ const { cursor: statusLabelCursor } = useCanvasStatusLabels(canvasRef, store, {
     openStatusLabel.value = label
   }
 })
-const { detailMarker: hoveredIssueMarker, cursor: issueMarkerCursor } = useCanvasIssueMarkers(
-  canvasRef,
-  store,
-  {
-    hitTest: hitTestIssueMarker,
-    onHover: (marker) => store.designCheck.highlightMarker(marker?.nodeIds ?? null),
-    onActivate: (marker) => {
-      activatePane()
-      propertiesTab.value = 'lint'
-      // An edge pin leads to its nearest issue; a marker opens every layer it covers.
-      const nodeIds = marker.direction ? marker.nodeIds.slice(0, 1) : marker.nodeIds
-      store.designCheck.openMarker(nodeIds)
-      if (marker.direction) store.revealNodes(nodeIds)
-    }
-  }
-)
 
 useTextEdit(canvasRef, store, { isEnabled: () => isActivePane.value })
 const { isDraggingOver } = useCanvasDrop(canvasRef, store, activatePane)
@@ -289,7 +269,7 @@ const cursor = computed(() =>
     ? 'none'
     : toolCursor(
         store.state.activeTool,
-        issueMarkerCursor.value ?? statusLabelCursor.value ?? cursorOverride.value
+        statusLabelCursor.value ?? cursorOverride.value
       )
 )
 </script>
@@ -325,7 +305,6 @@ const cursor = computed(() =>
         />
         <PlayIslands :view="paneView" :drawn="drawnView" :canvas="canvasRef" />
         <AppDropOverlay :visible="isDraggingOver" />
-        <IssueMarkerTooltip :marker="hoveredIssueMarker" :canvas="canvasRef" />
         <CanvasEyedropperLoupe :loupe="eyedropperLoupe" />
         <StatusLabelMenu
           :label="openStatusLabel"

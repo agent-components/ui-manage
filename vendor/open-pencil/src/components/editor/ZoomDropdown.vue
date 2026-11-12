@@ -13,11 +13,7 @@ import { useEditorCommands } from '@open-pencil/vue/editor/commands'
 import { useI18n } from '@open-pencil/vue/i18n'
 
 import { useEditorStore } from '@/app/editor/active-store'
-import {
-  setCommentsOnCanvas,
-  setDesignIssuesOnCanvas,
-  setSnappingPreference
-} from '@/app/settings/preferences/apply'
+import { setCommentsOnCanvas, setSnappingPreference } from '@/app/settings/preferences/apply'
 import { appPreferences } from '@/app/settings/preferences/store'
 import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import AppShortcutText from '@/components/ui/menu/AppShortcutText.vue'
@@ -208,16 +204,6 @@ watch(open, (v) => {
             <AppShortcutText>{{
               appMenuShortcutLabel('view-multiplayer-cursors')
             }}</AppShortcutText>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            :class="itemCls"
-            @select.prevent="setDesignIssuesOnCanvas(!appPreferences.designCheck.showOnCanvas)"
-          >
-            <icon-lucide-check
-              v-if="appPreferences.designCheck.showOnCanvas"
-              class="absolute left-2 size-3.5"
-            />
-            <span class="flex-1">{{ menuText.designIssues }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             :class="itemCls"

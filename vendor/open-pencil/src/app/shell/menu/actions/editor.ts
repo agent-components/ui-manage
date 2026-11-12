@@ -3,11 +3,7 @@ import type { SceneNode } from '@open-pencil/scene-graph'
 import { useEditorStore } from '@/app/editor/active-store'
 import { openVariablesDialog } from '@/app/editor/tokens/dialog'
 import { isUiManageSharePreview } from '@/app/integrations/ui-manage/mode'
-import {
-  setCommentsOnCanvas,
-  setDesignIssuesOnCanvas,
-  setSnappingPreference
-} from '@/app/settings/preferences/apply'
+import { setCommentsOnCanvas, setSnappingPreference } from '@/app/settings/preferences/apply'
 import { appPreferences } from '@/app/settings/preferences/store'
 import { onCanvasSelection } from '@/app/shell/commands/focused'
 
@@ -75,8 +71,6 @@ export function createSharedEditorMenuActions(
       store.state.showRemoteCursors = !store.state.showRemoteCursors
       store.requestRepaint()
     },
-    'view-design-issues': () =>
-      setDesignIssuesOnCanvas(!appPreferences.value.designCheck.showOnCanvas),
     'view-comments': () => setCommentsOnCanvas(!appPreferences.value.comments.showOnCanvas),
     'snap-geometry': () =>
       setSnappingPreference('geometry', !store.state.snappingPreferences.geometry),

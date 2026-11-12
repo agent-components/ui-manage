@@ -220,13 +220,6 @@ export const APP_MENU_SCHEMA = [
         shortcut: 'ALT+MOD+\\'
       },
       {
-        id: 'view-design-issues',
-        feature: 'document',
-        label: 'Design Issues',
-        checkbox: true,
-        handler: 'shell'
-      },
-      {
         id: 'view-comments',
         feature: 'document',
         label: 'Comments',

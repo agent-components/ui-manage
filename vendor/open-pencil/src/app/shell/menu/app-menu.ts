@@ -35,7 +35,6 @@ import {
 import { openSettingsDialog } from "@/app/settings/dialog";
 import {
   setCommentsOnCanvas,
-  setDesignIssuesOnCanvas,
   setSnappingPreference,
 } from "@/app/settings/preferences/apply";
 import { appPreferences } from "@/app/settings/preferences/store";
@@ -154,7 +153,6 @@ export function useAppMenu() {
     "view-rulers": "rulers",
     "view-pixel-grid": "pixelGrid",
     "view-multiplayer-cursors": "multiplayerCursors",
-    "view-design-issues": "designIssues",
     "view-comments": "comments",
     "snap-geometry": "snapToGeometry",
     "snap-objects": "snapToObjects",
@@ -239,8 +237,6 @@ export function useAppMenu() {
         return store.state.showPixelGrid !== false;
       case "view-multiplayer-cursors":
         return store.state.showRemoteCursors;
-      case "view-design-issues":
-        return appPreferences.value.designCheck.showOnCanvas;
       case "view-comments":
         return appPreferences.value.comments.showOnCanvas;
       case "snap-geometry":
@@ -283,8 +279,6 @@ export function useAppMenu() {
         return (value: boolean) => {
           if (store.state.showRemoteCursors !== value) itemAction(item)?.();
         };
-      case "view-design-issues":
-        return (value: boolean) => setDesignIssuesOnCanvas(value);
       case "view-comments":
         return (value: boolean) => setCommentsOnCanvas(value);
       case "snap-geometry":
