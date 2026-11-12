@@ -18,7 +18,8 @@ export function openPencilPwaPlugin() {
     registerType: 'autoUpdate',
     devOptions: { enabled: false },
     workbox: {
-      maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
+      // Noto Sans SC ships as one variable font, about 18 MB.
+      maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
       // Workbox follows `build.sourcemap` and would link a map the release then removes; the
       // service worker's errors never reach error reports anyway.
       sourcemap: false,
