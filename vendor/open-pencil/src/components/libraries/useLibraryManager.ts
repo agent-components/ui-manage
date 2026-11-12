@@ -2,11 +2,7 @@ import { computed, onScopeDispose, ref, watch, type Ref } from "vue";
 
 import type { EditorStore } from "@/app/editor/session";
 import { notificationMessages } from "@/app/i18n/notifications";
-import {
-  readLibraryCatalogSource,
-  readLibraryPriority,
-  type LibraryService,
-} from "@/app/libraries";
+import { readLibraryPriority, type LibraryService } from "@/app/libraries";
 import type { LibraryAssetUpdateGroup } from "@/app/libraries/update-groups";
 import { scopeLibraryUpdateGroups } from "@/app/libraries/update-groups";
 import { toast } from "@/app/shell/ui";
@@ -84,16 +80,6 @@ export function useLibraryManager(
     }
   }
 
-  async function setSource(source: "local" | "storage") {
-    await runOperation(async () => {
-      if (source === "storage") {
-        throw new Error("Remote storage libraries are unavailable");
-      }
-      service.useLocalCatalog();
-      await refresh();
-    });
-  }
-
   async function toggleLibrary(libraryId: string) {
     loading.value = true;
     try {
@@ -165,9 +151,6 @@ export function useLibraryManager(
     })
   );
 
-  const source = readLibraryCatalogSource();
-  if (source === "storage") void setSource("local");
-
   return {
     section,
     loading,
@@ -176,7 +159,6 @@ export function useLibraryManager(
     applying,
     visibleUpdateGroups,
     refresh,
-    setSource,
     toggleLibrary,
     preferLibrary,
     updateAsset,

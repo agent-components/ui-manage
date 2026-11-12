@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -106,6 +107,105 @@ export async function getDesignObject(objectKey: string): Promise<Uint8Array> {
     }
     throw error;
   }
+}
+
+export type StoredObject = {
+  bytes: Uint8Array;
+  etag: string | null;
+};
+
+export type StoredObjectListing = {
+  key: string;
+  size: number | null;
+  etag: string | null;
+};
+
+function isMissingObject(error: unknown): boolean {
+  const name =
+    error && typeof error === "object" && "name" in error
+      ? String((error as { name?: string }).name)
+      : "";
+  const code =
+    error && typeof error === "object" && "Code" in error
+      ? String((error as { Code?: string }).Code)
+      : "";
+  const status =
+    error && typeof error === "object" && "$metadata" in error
+      ? (error as { $metadata?: { httpStatusCode?: number } }).$metadata
+          ?.httpStatusCode
+      : undefined;
+  return (
+    name === "NoSuchKey" ||
+    name === "NotFound" ||
+    code === "NoSuchKey" ||
+    status === 404
+  );
+}
+
+export async function getStoredObject(
+  objectKey: string
+): Promise<StoredObject | null> {
+  const config = requireS3Config();
+  const client = createClient(config);
+  try {
+    const result = await client.send(
+      new GetObjectCommand({
+        Bucket: config.bucket,
+        Key: objectKey,
+      })
+    );
+    const bytes = await result.Body?.transformToByteArray();
+    if (!bytes) return null;
+    return { bytes, etag: result.ETag ?? null };
+  } catch (error: unknown) {
+    if (isMissingObject(error)) return null;
+    throw error;
+  }
+}
+
+export async function putStoredObject(
+  objectKey: string,
+  body: Uint8Array,
+  contentType: string
+): Promise<void> {
+  const config = requireS3Config();
+  const client = createClient(config);
+  await client.send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: objectKey,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+}
+
+export async function listStoredObjects(
+  prefix: string
+): Promise<StoredObjectListing[]> {
+  const config = requireS3Config();
+  const client = createClient(config);
+  const objects: StoredObjectListing[] = [];
+  let token: string | undefined;
+  do {
+    const page = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: prefix,
+        ContinuationToken: token,
+      })
+    );
+    for (const item of page.Contents ?? []) {
+      if (!item.Key) continue;
+      objects.push({
+        key: item.Key,
+        size: item.Size ?? null,
+        etag: item.ETag ?? null,
+      });
+    }
+    token = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (token);
+  return objects;
 }
 
 export async function deleteDesignObject(objectKey: string): Promise<void> {

@@ -28,20 +28,16 @@ import type {
 } from '@open-pencil/core/tools'
 
 import type { EditorStore } from '@/app/editor/session'
-import { LocalLibraryCatalog } from '@/app/libraries/catalog/local'
-import { RoutedLibraryCatalog, type LibraryCatalogSource } from '@/app/libraries/catalog/routed'
-import {
-  readLibraryPriority,
-  writeLibraryCatalogSource,
-  writeLibraryPriority
-} from '@/app/libraries/preferences'
+import { RemoteLibraryObjectStore } from '@/app/libraries/catalog/remote-store'
+import { StorageLibraryCatalog } from '@/app/libraries/catalog/storage'
+import type { LibraryCatalogSource } from '@/app/libraries/catalog/routed'
+import { readLibraryPriority, writeLibraryPriority } from '@/app/libraries/preferences'
 import type { LibraryAssetUpdateGroup } from '@/app/libraries/update-groups'
 
 export type EnabledLibraryAsset = ComponentCatalogLibraryAsset
 
 export class LibraryService implements ComponentCatalog {
   readonly #catalog: LibraryCatalog
-  readonly #routedCatalog: RoutedLibraryCatalog | null
   readonly #summaries = shallowRef<LibrarySummary[]>([])
   readonly #enabledAssets = shallowRef<EnabledLibraryAsset[]>([])
   readonly #updates = shallowRef<LibraryUpdateSummary[]>([])
@@ -50,28 +46,14 @@ export class LibraryService implements ComponentCatalog {
   #activeEditor: EditorStore | null = null
 
   constructor(catalog?: LibraryCatalog) {
-    if (catalog) {
-      this.#catalog = markRaw(catalog)
-      this.#routedCatalog = catalog instanceof RoutedLibraryCatalog ? catalog : null
-    } else {
-      const routed = new RoutedLibraryCatalog(new LocalLibraryCatalog())
-      this.#catalog = markRaw(routed)
-      this.#routedCatalog = routed
-    }
+    this.#catalog = markRaw(
+      catalog ?? new StorageLibraryCatalog(new RemoteLibraryObjectStore())
+    )
   }
 
+  /** Libraries are stored on the server for the signed-in account. */
   get catalogSource(): LibraryCatalogSource {
-    return this.#routedCatalog?.source ?? 'local'
-  }
-
-  useLocalCatalog(): void {
-    this.#routedCatalog?.useLocal()
-    writeLibraryCatalogSource('local')
-  }
-
-  useStorageCatalog(catalog: LibraryCatalog): void {
-    this.#routedCatalog?.useStorage(catalog)
-    writeLibraryCatalogSource('storage')
+    return 'storage'
   }
 
   get summaries() {
@@ -503,7 +485,7 @@ export class LibraryService implements ComponentCatalog {
   }
 
   async publish(input: PublishLibraryInput): Promise<ComponentLibraryRevision> {
-    ensureLibraryAssetKeys(input.graph, input.assetNodeIds)
+    ensureLibraryAssetKeys(input.graph)
     const revision = await this.#catalog.publishRevision(input)
     this.#revisionCache.set(
       this.#revisionCacheKey(input.libraryId, revision.manifest.revisionId),
