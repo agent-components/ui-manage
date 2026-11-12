@@ -3,6 +3,8 @@ import { useEventListener } from '@vueuse/core'
 import { extractImageFilesFromClipboard } from '@open-pencil/vue/canvas/drop'
 
 import type { EditorStore } from '@/app/editor/active-store'
+import { ensureCreationPage } from '@/app/integrations/ui-manage/blank-document'
+import { isUiManageEmbed } from '@/app/integrations/ui-manage/mode'
 import { isDesignClipboardHTML } from '@/app/editor/clipboard/html'
 import { getInMemoryClipboardHTML, matchingClipboardSnapshot } from '@/app/editor/clipboard/memory'
 import {
@@ -59,6 +61,7 @@ export function bindEditorClipboard(store: EditorStore) {
   useEventListener(window, 'paste', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
+    if (isUiManageEmbed) ensureCreationPage(store)
 
     const cursorPos = cursorPosition(store)
 

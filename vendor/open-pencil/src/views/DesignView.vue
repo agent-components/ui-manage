@@ -11,6 +11,7 @@ import { useUiManageAuth } from '@/app/integrations/ui-manage/auth'
 import { bootUiManageBridgeFromRoute } from '@/app/integrations/ui-manage/bridge'
 import {
   bootSharePreview,
+  markSharePreview,
   stopSharePreview
 } from '@/app/integrations/ui-manage/share-bridge'
 import { appRuntimeConfig } from '@/app/runtime/config'
@@ -68,6 +69,10 @@ function openFirstTab(): Tab {
 }
 
 {
+  // Before the canvas mounts, so share does not open an editor canvas and throw its fonts away.
+  if (uiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
+    markSharePreview()
+  }
   // Need a store before useKeyboard/useEditorMenu; ui-manage bridge reuses this blank tab.
   activeTab.value ?? openFirstTab()
 }

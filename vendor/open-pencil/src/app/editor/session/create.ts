@@ -6,6 +6,7 @@ import { SceneGraph } from "@open-pencil/scene-graph";
 import { createShaderRasterizer } from "@open-pencil/vue/canvas/surface";
 
 import { currentUserName } from "@/app/integrations/ui-manage/auth";
+import { isUiManageEmbed } from "@/app/integrations/ui-manage/mode";
 import {
   getActiveEditorStore,
   setActiveEditorStore,
@@ -76,6 +77,10 @@ function buildEditorStore(initialGraph?: SceneGraph) {
 
   if (initialGraph) {
     editor.subscribeToGraph();
+  } else if (isUiManageEmbed) {
+    // 新建稿不带页面。SceneGraph 构造时会放一个 Page 1，这里拿掉。
+    for (const page of [...graph.getPages()]) graph.deleteNode(page.id);
+    state.currentPageId = "";
   }
 
   const { selectedNodes, selectedNode, layerTree, disposeSelection } =

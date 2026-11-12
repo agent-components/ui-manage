@@ -10,7 +10,14 @@ export async function applyImportedDocument(
   load?: DocumentLoadSession
 ) {
   const firstPage = imported.getPages()[0] as SceneNode | undefined
-  const pageId = firstPage?.id ?? imported.rootId
+  if (!firstPage) {
+    load?.update({ phase: 'populating-page', detail: null })
+    editor.replaceGraph(imported)
+    editor.undo.clear()
+    editor.clearSelection()
+    return
+  }
+  const pageId = firstPage.id
   const stagingEditor = createEditor({
     graph: imported,
     loadFont,

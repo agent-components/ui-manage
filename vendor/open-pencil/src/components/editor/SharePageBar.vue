@@ -5,6 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { isPageDivider, usePageList } from '@open-pencil/vue/primitives/PageList'
 
+import { settleSharePageText } from '@/app/integrations/ui-manage/share-text'
+import { getActiveStore } from '@/app/tabs'
+
 const route = useRoute()
 const router = useRouter()
 const { pages: rawPages, currentPageId, switchPage } = usePageList()
@@ -78,6 +81,7 @@ async function selectPage(
   switching.value = true
   try {
     await switchPage(page.id)
+    await settleSharePageText(getActiveStore())
     if (options.fromUser || options.writeUrl) writeHash(page.name)
   } finally {
     switching.value = false

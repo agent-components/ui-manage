@@ -1,6 +1,7 @@
 import { ALL_TOOLS, toolChangesDocument } from "@open-pencil/core/tools";
 import type { ToolDef } from "@open-pencil/core/tools";
 import { toJsonSchema } from "@valibot/to-json-schema";
+import { exportPngTool } from "./mcp-png";
 
 /** 方案确认的 49 个画稿工具。 */
 export const MCP_TOOL_NAMES = [
@@ -128,6 +129,7 @@ export function listMcpToolDescriptors() {
       description: tool.description,
       inputSchema: toolInputSchema(tool),
     })),
+    exportPngTool,
     ...MCP_SHARE_TOOLS,
   ];
 }

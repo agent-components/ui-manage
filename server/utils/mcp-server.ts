@@ -9,12 +9,33 @@ import type { AuthUser } from "./auth";
 import type { McpDesign } from "./mcp-design";
 import { withMcpDocument } from "./mcp-document";
 import {
+  exportPngToolResponse,
+  isExportPngTool,
+  runExportPng,
+} from "./mcp-png";
+import {
   isShareTool,
   listMcpToolDescriptors,
   toolByName,
   toolMutates,
 } from "./mcp-tools";
 import { ensureShareToken, readShareToken, shareLinkView } from "./share";
+
+/** 这些工具把新图层放在当前页上。没有页面时不能悄悄落到文档根上。 */
+const PLACES_ON_PAGE = new Set([
+  "create_shape",
+  "create_vector",
+  "import_svg",
+  "insert_icon",
+  "render",
+  "create_instance",
+]);
+
+function createdPageId(result: unknown): string | null {
+  if (!result || typeof result !== "object" || !("id" in result)) return null;
+  const id = (result as { id: unknown }).id;
+  return typeof id === "string" ? id : null;
+}
 
 export type McpRequestContext = {
   user: AuthUser;
@@ -65,6 +86,23 @@ function createServer(): McpServer {
       }
     }
 
+    if (isExportPngTool(request.params.name)) {
+      const { design } = requireContext();
+      const args = (request.params.arguments ?? {}) as Record<string, unknown>;
+      try {
+        const result = await withMcpDocument(design, false, (figma) =>
+          runExportPng(figma, args)
+        );
+        return exportPngToolResponse(result);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: message }],
+        };
+      }
+    }
+
     const tool = toolByName(request.params.name);
     if (!tool) {
       return {
@@ -86,8 +124,20 @@ function createServer(): McpServer {
         design,
         toolMutates(tool),
         async (figma) => {
+          if (
+            PLACES_ON_PAGE.has(tool.name) &&
+            figma.graph.getPages().length === 0
+          ) {
+            throw new Error("当前设计稿没有页面，请先调用 create_page");
+          }
           await tool.loadFonts(figma, args);
-          return tool.execute(figma, args);
+          const result = await tool.execute(figma, args);
+          if (tool.name === "create_page") {
+            const pageId = createdPageId(result);
+            const page = pageId ? figma.getNodeById(pageId) : null;
+            if (page) await figma.setCurrentPageAsync(page);
+          }
+          return result;
         }
       );
 

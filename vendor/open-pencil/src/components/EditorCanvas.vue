@@ -37,6 +37,11 @@ import { toolCursor } from '@open-pencil/vue/editor/tool-cursor'
 import { autoLayoutValueAnchor, type AutoLayoutValueField } from '@open-pencil/vue/shared/input'
 
 import { useEditorStore } from '@/app/editor/active-store'
+import {
+  ensureCreationPage,
+  toolNeedsPage
+} from '@/app/integrations/ui-manage/blank-document'
+import { isUiManageEmbed } from '@/app/integrations/ui-manage/mode'
 import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaboration-awareness'
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
 import { canvasOverlayObstacles } from '@/app/editor/canvas/obstacles'
@@ -68,6 +73,18 @@ const isActivePane = computed(() => !paneId || store.activePaneId.value === pane
 
 function activatePane() {
   if (paneId) store.setActivePane(paneId)
+}
+
+function beginCreate(event: PointerEvent) {
+  activatePane()
+  if (isUiManageEmbed && event.button === 0 && toolNeedsPage(store.state.activeTool)) {
+    ensureCreationPage(store)
+  }
+}
+
+function prepareDrop() {
+  activatePane()
+  if (isUiManageEmbed) ensureCreationPage(store)
 }
 
 function updatePaneCursor(cx: number, cy: number) {
@@ -199,7 +216,7 @@ const { cursor: statusLabelCursor } = useCanvasStatusLabels(canvasRef, store, {
 })
 
 useTextEdit(canvasRef, store, { isEnabled: () => isActivePane.value })
-const { isDraggingOver } = useCanvasDrop(canvasRef, store, activatePane)
+const { isDraggingOver } = useCanvasDrop(canvasRef, store, prepareDrop)
 
 const valueFieldIcons = {
   paddingTop: IconLucidePanelTop,
@@ -283,7 +300,7 @@ const cursor = computed(() =>
         :data-pane-id="paneId"
         :data-active-pane="isActivePane ? 'true' : 'false'"
         class="canvas-area relative min-h-0 min-w-0 flex-1 overflow-hidden"
-        @pointerdown.capture="activatePane"
+        @pointerdown.capture="beginCreate"
         @focusin.capture="activatePane"
         @wheel.capture="activatePane"
         @dragenter.capture="activatePane"

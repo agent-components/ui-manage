@@ -43,10 +43,17 @@ async function withDesignLock<T>(
   }
 }
 
+/** 空稿不带 SceneGraph 默认的 Page 1。页面只来自 create_page。 */
+function createBlankGraph(): SceneGraph {
+  const graph = new SceneGraph();
+  for (const page of [...graph.getPages()]) graph.deleteNode(page.id);
+  return graph;
+}
+
 async function loadGraph(design: McpDesign): Promise<SceneGraph> {
   try {
     const bytes = await getDesignObject(design.objectKey);
-    if (!bytes.byteLength) return new SceneGraph();
+    if (!bytes.byteLength) return createBlankGraph();
     const copy = bytes.buffer.slice(
       bytes.byteOffset,
       bytes.byteOffset + bytes.byteLength
@@ -57,7 +64,7 @@ async function loadGraph(design: McpDesign): Promise<SceneGraph> {
       error && typeof error === "object" && "statusCode" in error
         ? Number((error as { statusCode?: number }).statusCode)
         : 0;
-    if (statusCode === 404) return new SceneGraph();
+    if (statusCode === 404) return createBlankGraph();
     throw error;
   }
 }

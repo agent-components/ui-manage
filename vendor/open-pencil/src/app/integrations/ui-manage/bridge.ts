@@ -14,6 +14,7 @@ import {
 } from "@/app/tabs";
 
 import { useUiManageAuth } from "./auth";
+import { stripDocumentPages } from "./blank-document";
 
 export type UiManageBridgeConfig = {
   designId: string;
@@ -180,11 +181,11 @@ export async function bootUiManageBridgeWithConfig(
   if (bytes.byteLength > 0) {
     const file = new File([bytes], `${title}.fig`);
     await tab.store.openFigFile(file);
-  }
-  tab.store.state.documentName = title;
-  if (bytes.byteLength === 0) {
+  } else {
+    stripDocumentPages(tab.store);
     toast.info("空白稿：编辑后 ⌘/Ctrl+S 保存");
   }
+  tab.store.state.documentName = title;
   window.parent?.postMessage(
     { type: "ui-manage:ready", designId: cfg.designId },
     "*"

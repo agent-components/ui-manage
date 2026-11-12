@@ -11,6 +11,8 @@ import {
   type Tab,
 } from "@/app/tabs";
 
+import { settleSharePageText } from "./share-text";
+
 const POLL_MS = 10_000;
 
 export type ShareMeta = {
@@ -24,9 +26,16 @@ export function isUiManageSharePreview(): boolean {
   return sharePreviewActive.value;
 }
 
+/** Set before the first paint so the share canvas is the one that loads fonts. */
+export function markSharePreview(): void {
+  sharePreviewActive.value = true;
+}
+
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let activeToken: string | null = null;
 let lastUpdatedAt: string | null = null;
+let lastContentHash: string | null = null;
+let applying = false;
 
 function isBlankDocumentTab(tab: Tab): boolean {
   if (tab.kind !== "document") return false;
@@ -129,21 +138,34 @@ async function restoreSharePageFromHash(
   await store.switchPage(target.id);
 }
 
+async function hashBytes(bytes: Uint8Array): Promise<string> {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", copy);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+}
+
 async function applyShareDocument(
   token: string,
-  meta: ShareMeta
+  meta: ShareMeta,
+  bytes?: Uint8Array
 ): Promise<void> {
+  const fileBytes = bytes ?? (await fetchShareBytes(token));
   const title = meta.name.trim() || "未命名设计稿";
-  const bytes = await fetchShareBytes(token);
   const tab = takeDocumentTab();
-  if (bytes.byteLength > 0) {
-    const file = new File([bytes], `${title}.fig`);
+  if (fileBytes.byteLength > 0) {
+    const file = new File([fileBytes], `${title}.fig`);
     await tab.store.openFigFile(file);
   }
   tab.store.state.documentName = title;
   enableShareReadOnly(tab.store);
   await restoreSharePageFromHash(tab.store).catch((error) => {
     console.error("[ui-manage share] restore page from hash", error);
+  });
+  await settleSharePageText(tab.store).catch((error) => {
+    console.error("[ui-manage share] settle text", error);
   });
 }
 
@@ -158,7 +180,36 @@ export function stopSharePreview(): void {
   stopSharePolling();
   activeToken = null;
   lastUpdatedAt = null;
+  lastContentHash = null;
+  applying = false;
   sharePreviewActive.value = false;
+}
+
+/** Reload only when the file bytes changed. A newer timestamp with the same bytes is not a refresh. */
+async function refreshShareIfChanged(token: string): Promise<void> {
+  if (applying || activeToken !== token) return;
+  const meta = await fetchShareMeta(token);
+  if (activeToken !== token) return;
+  if (meta.updatedAt === lastUpdatedAt) return;
+
+  applying = true;
+  try {
+    const bytes = await fetchShareBytes(token);
+    if (activeToken !== token) return;
+    const hash = await hashBytes(bytes);
+    const title = meta.name.trim() || "未命名设计稿";
+    if (hash === lastContentHash) {
+      lastUpdatedAt = meta.updatedAt;
+      const store = getActiveStore();
+      if (store.state.documentName !== title) store.state.documentName = title;
+      return;
+    }
+    await applyShareDocument(token, meta, bytes);
+    lastContentHash = hash;
+    lastUpdatedAt = meta.updatedAt;
+  } finally {
+    applying = false;
+  }
 }
 
 function startSharePolling(token: string): void {
@@ -167,10 +218,7 @@ function startSharePolling(token: string): void {
     void (async () => {
       if (!activeToken || activeToken !== token) return;
       try {
-        const meta = await fetchShareMeta(token);
-        if (meta.updatedAt === lastUpdatedAt) return;
-        lastUpdatedAt = meta.updatedAt;
-        await applyShareDocument(token, meta);
+        await refreshShareIfChanged(token);
       } catch (error) {
         console.error("[ui-manage share poll]", error);
         if (error instanceof Error && error.message.includes("已关闭")) {
@@ -192,8 +240,10 @@ export async function bootSharePreview(token: string): Promise<boolean> {
   activeToken = trimmed;
 
   const meta = await fetchShareMeta(trimmed);
+  const bytes = await fetchShareBytes(trimmed);
+  lastContentHash = await hashBytes(bytes);
   lastUpdatedAt = meta.updatedAt;
-  await applyShareDocument(trimmed, meta);
+  await applyShareDocument(trimmed, meta, bytes);
   startSharePolling(trimmed);
   return true;
 }
