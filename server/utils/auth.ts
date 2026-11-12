@@ -8,6 +8,18 @@ export type AuthUser = {
   id: string;
   account: string;
   displayName: string;
+  email: string | null;
+  phone: string | null;
+  aboutMe: string | null;
+};
+
+export type ProfileUpdate = {
+  displayName: string;
+  email: string | null;
+  phone: string | null;
+  aboutMe: string | null;
+  currentPassword?: string;
+  newPassword?: string;
 };
 
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -20,6 +32,9 @@ type UserRow = {
   id: string;
   account: string;
   displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  aboutMe: string | null;
 };
 
 function toAuthUser(row: UserRow | undefined): AuthUser | null {
@@ -29,6 +44,9 @@ function toAuthUser(row: UserRow | undefined): AuthUser | null {
     id: row.id,
     account: row.account,
     displayName: displayName || row.account,
+    email: row.email?.trim() || null,
+    phone: row.phone?.trim() || null,
+    aboutMe: row.aboutMe?.trim() || null,
   };
 }
 
@@ -38,7 +56,7 @@ export async function authenticateUser(
   password: string
 ): Promise<AuthUser | null> {
   const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName"
+    SELECT id, account, "displayName", email, phone, "aboutMe"
     FROM public.users
     WHERE account = ${account}
       AND password = ${password}
@@ -80,7 +98,7 @@ export async function issueUserToken(account: string): Promise<string> {
 export async function findUserByToken(token: string): Promise<AuthUser | null> {
   if (!isUserToken(token)) return null;
   const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName"
+    SELECT id, account, "displayName", email, phone, "aboutMe"
     FROM public.users
     WHERE token = ${token}
       AND status = 'ACTIVE'
@@ -103,7 +121,7 @@ export async function findUserByApiToken(
   if (!apiToken) return null;
 
   const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName"
+    SELECT id, account, "displayName", email, phone, "aboutMe"
     FROM public.users
     WHERE account = ${apiToken.ownerAccount}
       AND status = 'ACTIVE'
@@ -147,6 +165,50 @@ export function extractBearerToken(event: H3Event): string | null {
   if (!auth) return null;
   const match = /^Bearer\s+(.+)$/i.exec(auth.trim());
   return match?.[1]?.trim() || null;
+}
+
+/** 更新显示名、邮箱、手机、简介；传入 newPassword 时先核对当前密码。 */
+export async function updateUserProfile(
+  account: string,
+  patch: ProfileUpdate
+): Promise<AuthUser> {
+  if (patch.newPassword) {
+    const current = await prisma.$queryRaw<{ password: string }[]>`
+      SELECT password
+      FROM public.users
+      WHERE account = ${account} AND status = 'ACTIVE'
+      LIMIT 1
+    `;
+    if (!current[0] || current[0].password !== patch.currentPassword) {
+      throw createError({ statusCode: 400, message: "当前密码不正确" });
+    }
+  }
+
+  const rows = await prisma.$queryRaw<UserRow[]>`
+    UPDATE public.users
+    SET "displayName" = ${patch.displayName},
+        email = ${patch.email},
+        phone = ${patch.phone},
+        "aboutMe" = ${patch.aboutMe},
+        "updatedAt" = now()
+    WHERE account = ${account} AND status = 'ACTIVE'
+    RETURNING id, account, "displayName", email, phone, "aboutMe"
+  `;
+  const user = toAuthUser(rows[0]);
+  if (!user) {
+    throw createError({ statusCode: 404, message: "账号不存在或已停用" });
+  }
+
+  if (patch.newPassword) {
+    await prisma.$executeRaw`
+      UPDATE public.users
+      SET password = ${patch.newPassword},
+          "updatedAt" = now()
+      WHERE account = ${account} AND status = 'ACTIVE'
+    `;
+  }
+
+  return user;
 }
 
 export async function requireUser(event: H3Event): Promise<AuthUser> {

@@ -7,5 +7,8 @@ export default defineEventHandler(async (event) => {
     id: user.id,
     account: user.account,
     displayName: user.displayName,
+    email: user.email,
+    phone: user.phone,
+    aboutMe: user.aboutMe,
   };
 });
