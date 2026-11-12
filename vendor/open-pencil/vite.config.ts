@@ -18,7 +18,6 @@ import {
   openPencilAutomationPlugin,
 } from "./vite/automation-stub";
 import { bootSplashPlugin } from "./vite/boot-splash";
-import { cloudSitePlugin } from "./vite/cloud-site";
 import { donationDefine } from "./vite/funding";
 import { aiIconCollection } from "./vite/icons";
 import { inlineScriptPlugin } from "./vite/inline-script";
@@ -79,27 +78,19 @@ function openPencilAssets(): Plugin {
 }
 
 export default defineConfig(async ({ command, mode }) => {
-  const cloudSite = mode === "cloud";
   const metrics = mode === "metrics";
   const env = loadEnv(mode, __dirname, "VITE_");
-  // ui-manage: always force official Cloud off; backend is Nitro `/api` only.
-  const cloud = uiManageEmbed
-    ? false
-    : (process.env.VITE_OPENPENCIL_CLOUD ?? env.VITE_OPENPENCIL_CLOUD) !==
-      "off";
-  const automation = !metrics && !cloudSite && !uiManageEmbed;
+  const automation = !metrics && !uiManageEmbed;
 
   return {
     resolve: {
-      alias: createOpenPencilAliases(__dirname, { cloud }),
+      alias: createOpenPencilAliases(__dirname),
     },
     define: {
       __OPENPENCIL_APP_VERSION__: JSON.stringify(packageJson.version),
-      __OPENPENCIL_CLOUD_SITE__: JSON.stringify(false),
       ...(uiManageEmbed
         ? { __OPENPENCIL_DONATION_URL__: "null" }
         : donationDefine(__dirname)),
-      __OPENPENCIL_OFFICIAL_CLOUD_URL__: JSON.stringify(null),
       __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(
         automation ? localAutomationToken(command) : null
       ),
@@ -111,9 +102,6 @@ export default defineConfig(async ({ command, mode }) => {
       ),
       "import.meta.env.VITE_OPENPENCIL_UI_MANAGE": JSON.stringify(
         uiManageEmbed ? "1" : ""
-      ),
-      "import.meta.env.VITE_OPENPENCIL_CLOUD": JSON.stringify(
-        uiManageEmbed ? "off" : env.VITE_OPENPENCIL_CLOUD ?? ""
       ),
       "import.meta.env.VITE_OPENPENCIL_FEEDBACK": JSON.stringify(
         uiManageEmbed ? "" : env.VITE_OPENPENCIL_FEEDBACK ?? ""
@@ -163,11 +151,9 @@ export default defineConfig(async ({ command, mode }) => {
       metrics
         ? metricsBrandPlugin((outDir) => resolve(outDir, ".."))
         : openPencilPwaPlugin(),
-      cloudSite ? cloudSitePlugin() : undefined,
     ],
     clearScreen: false,
-    appType: cloudSite ? "mpa" : "spa",
-    cacheDir: cloudSite ? "node_modules/.vite-cloud" : undefined,
+    appType: "spa",
     publicDir: metrics ? false : "public",
     base: metrics ? "/admin/" : "/",
     build: {
@@ -175,22 +161,14 @@ export default defineConfig(async ({ command, mode }) => {
       chunkSizeWarningLimit: 2500,
       sourcemap:
         !metrics && env.VITE_OPENPENCIL_FEEDBACK === "on" ? "hidden" : false,
-      outDir: metrics
-        ? "dist-metrics/admin"
-        : cloudSite
-        ? "dist-cloud"
-        : "dist",
+      outDir: metrics ? "dist-metrics/admin" : "dist",
       rolldownOptions: {
         // ui-manage / slim App: single SPA entry only
         input: { main: resolve(__dirname, "index.html") },
       },
     },
     server: {
-      ...createDevServerOptions(
-        host,
-        __dirname,
-        cloudSite ? process.env.PORTLESS_URL : undefined
-      ),
+      ...createDevServerOptions(host, __dirname),
       ...(uiManageEmbed
         ? {
             strictPort: true,

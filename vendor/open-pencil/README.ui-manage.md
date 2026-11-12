@@ -6,7 +6,7 @@
 - **库**：公开 npm `@open-pencil/*@0.17.0-beta.2`（`canvaskit@0.16.0`）
 - **本地洞**：`shims/`（含 `@open-pencil/collab` stub；多人协作已去掉）
 - **后端**：只走仓库根目录 `server/` + `prisma/`（Vite proxy `/api` → Nitro `:3001`）
-- **不接入**官方 Cloud / `@open-pencil/cloud` 运行时（`VITE_OPENPENCIL_CLOUD=off`）
+- **不接入**官方 Cloud / `@open-pencil/cloud`。构建固定把 Cloud 入口指到空实现，没有开关
 
 ## 启动
 
@@ -28,5 +28,5 @@ pnpm dev          # api=nitro:3001 + web=vite:5173
 ## 安装与跑 Vite
 
 - 安装：`bun install`（根脚本 `pnpm editor:install`）；`postinstall` 会把 `@open-pencil/canvaskit` 的 `canvaskit.wasm` 拷到 `public/`（默认 locator 是 `/canvaskit.wasm`）
-- 开发：`OPENPENCIL_UI_MANAGE=1 VITE_OPENPENCIL_CLOUD=off npx vite`（勿用 `bunx --bun vite`）
+- 开发：`OPENPENCIL_UI_MANAGE=1 npx vite`（勿用 `bunx --bun vite`）
 - 画布空白但图层面板有图层：多半是 CanvasKit JS/wasm 未配对或 `/canvaskit.wasm` 被 SPA 回成 HTML；硬刷新后再试

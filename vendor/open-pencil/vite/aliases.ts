@@ -21,10 +21,7 @@ function cloudOffAliases(rootDir: string) {
   ];
 }
 
-export function createOpenPencilAliases(
-  rootDir: string,
-  options: { cloud?: boolean } = {}
-) {
+export function createOpenPencilAliases(rootDir: string) {
   const emptyNodeModule = resolve(rootDir, "vite/empty-node-module.ts");
   const shim = (...parts: string[]) => resolve(rootDir, "shims", ...parts);
   const removed = (...parts: string[]) =>
@@ -64,7 +61,7 @@ export function createOpenPencilAliases(
       replacement: shim("source-map-generator.ts"),
     },
     { find: /^@acemir\/cssom$/, replacement: shim("acemir-cssom.ts") },
-    ...(options.cloud === false ? cloudOffAliases(rootDir) : []),
+    ...cloudOffAliases(rootDir),
     { find: "@", replacement: resolve(rootDir, "src") },
 
     // harness → local stub (package not installed); feedback removed
@@ -283,7 +280,10 @@ export function createOpenPencilAliases(
       find: "@open-pencil/collab",
       replacement: resolve(rootDir, "src/shims/removed"),
     },
-    { find: "#collab", replacement: resolve(rootDir, "src/shims/removed/collab.ts") },
+    {
+      find: "#collab",
+      replacement: resolve(rootDir, "src/shims/removed/collab.ts"),
+    },
 
     // stock canvaskit-wasm → published patched build
     {
