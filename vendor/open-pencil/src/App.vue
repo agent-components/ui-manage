@@ -3,13 +3,11 @@ import { useHead } from '@unhead/vue'
 import { useEventListener } from '@vueuse/core'
 import { MotionConfig } from 'motion-v'
 import { TooltipProvider } from 'reka-ui'
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted } from 'vue'
 
 import { provideEditor } from '@open-pencil/vue'
 import { useI18n } from '@open-pencil/vue/i18n'
 
-import { startCloud } from '@/app/cloud/integration'
 import { useDocumentCloseProtection } from '@/app/document/close/use'
 import { endRecoverySession, startRecoverySession } from '@/app/document/recovery/session'
 import { useFollowingEditorStore } from '@/app/editor/active-store'
@@ -27,7 +25,6 @@ import AppShell from '@/components/shell/AppShell.vue'
 import AppToaster from '@/components/shell/AppToaster.vue'
 
 const { locale } = useI18n()
-const router = useRouter()
 
 useHead({
   titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil'),
@@ -54,9 +51,6 @@ useEventListener(window, 'pageshow', (event) => {
 
 onMounted(() => {
   toast.setupGlobalErrorHandler()
-  onUnmounted(
-    startCloud({ leaveLinkAddress: () => router.isReady().then(() => router.replace('/designs')) })
-  )
 })
 </script>
 

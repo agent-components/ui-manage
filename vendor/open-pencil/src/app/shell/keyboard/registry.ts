@@ -10,7 +10,6 @@ import {
   type EditorCommandId,
 } from "@open-pencil/vue/editor/commands";
 
-import { isCloudBinding, openVersionDialog } from "@/app/cloud/integration";
 import { useComments } from "@/app/comments/use";
 import {
   copySelectionProperties,
@@ -252,13 +251,6 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
           return;
         }
         void store.saveFigFileAs();
-      },
-    },
-    {
-      id: "save-version",
-      keys: appMenuTinykeysShortcut("save-version") ?? "$mod+Alt+KeyS",
-      run: ({ store }) => {
-        if (isCloudBinding(store.getStorageBinding())) openVersionDialog(store);
       },
     },
     ...commandShortcuts("selection.ungroup", "edit.redo"),

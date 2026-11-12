@@ -1,4 +1,3 @@
-import { openVersionDialog, openVersionHistory } from "@/app/cloud/integration";
 import type { EditorStore } from "@/app/editor/active-store";
 import { saveActiveToUiManage } from "@/app/integrations/ui-manage/bridge";
 import {
@@ -43,7 +42,5 @@ export function createSaveMenuActions(store: EditorStore) {
       // ui-manage: Save To dialog removed — use ⌘/Ctrl+S / API bridge.
       if (isUiManageEmbed) return;
     }),
-    "save-version": onDocument(() => openVersionDialog(store)),
-    "version-history": onDocument(() => openVersionHistory(store)),
   };
 }

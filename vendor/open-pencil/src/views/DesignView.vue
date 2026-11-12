@@ -26,7 +26,6 @@ import {
   getActiveStore,
   type Tab
 } from '@/app/tabs'
-import { syncTabAddress } from '@/app/tabs/address'
 import ColorSpaceBanner from '@/components/canvas/ColorSpaceBanner.vue'
 import CommandPalette from '@/components/commands/CommandPalette.vue'
 import EditorWorkspace from '@/components/editor/EditorWorkspace.vue'
@@ -77,8 +76,6 @@ useHead({ title: undefined })
 useKeyboard()
 useEditorMenu()
 useDocumentDrop()
-
-syncTabAddress(router, route)
 
 useEventListener(
   document,

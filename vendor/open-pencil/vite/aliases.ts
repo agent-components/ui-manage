@@ -4,23 +4,6 @@ import { resolve } from "node:path";
  * Published `@open-pencil/*` resolve from npm. Only shim tarball holes, unpublished
  * collab, and harness stubs (not installed).
  */
-function cloudOffAliases(rootDir: string) {
-  return [
-    {
-      find: /^@\/app\/cloud\/integration$/,
-      replacement: resolve(rootDir, "src/app/cloud/integration/off/index.ts"),
-    },
-    {
-      find: /^@\/app\/cloud\/integration\/storage$/,
-      replacement: resolve(rootDir, "src/app/cloud/integration/off/storage.ts"),
-    },
-    {
-      find: /^@\/components\/cloud\/integration$/,
-      replacement: resolve(rootDir, "src/components/cloud/integration/off.ts"),
-    },
-  ];
-}
-
 export function createOpenPencilAliases(rootDir: string) {
   const emptyNodeModule = resolve(rootDir, "vite/empty-node-module.ts");
   const shim = (...parts: string[]) => resolve(rootDir, "shims", ...parts);
@@ -61,7 +44,6 @@ export function createOpenPencilAliases(rootDir: string) {
       replacement: shim("source-map-generator.ts"),
     },
     { find: /^@acemir\/cssom$/, replacement: shim("acemir-cssom.ts") },
-    ...cloudOffAliases(rootDir),
     { find: "@", replacement: resolve(rootDir, "src") },
 
     // harness → local stub (package not installed); feedback removed

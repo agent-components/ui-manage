@@ -7,10 +7,8 @@ import { resolveEditorProfile } from '@open-pencil/core'
 import { useDesignCheckMessages, useI18n } from '@open-pencil/vue/i18n'
 
 import { propertiesTab as activeTab } from '@/app/shell/properties-tab'
-import { isVersionHistoryOpen } from '@/app/cloud/integration'
 import { useEditorStore } from '@/app/editor/active-store'
 import { countIssues } from '@/app/editor/design-check/issues'
-import { CloudVersionHistory } from '@/components/cloud/integration'
 import propertiesTabsTheme from '@/theme/panel/properties-tabs'
 
 import CodePanel from './CodePanel.vue'
@@ -28,8 +26,6 @@ const store = useEditorStore()
 const tabStyles = propertiesTabs()
 /** The Comment tool turns the sidebar into the comments list, as in Figma; the tabs keep their state. */
 const commenting = computed(() => store.state.activeTool === 'COMMENT')
-/** Version history takes the sidebar while it is open, for the document and a version alike. */
-const history = computed(() => isVersionHistoryOpen(store))
 
 /** Whether the document has design lint: a board has none, as FigJam has none. */
 const lints = computed(() => resolveEditorProfile(store.state).lint)
@@ -52,10 +48,9 @@ const problemCount = computed(() => {
     class="flex min-w-0 flex-1 flex-col overflow-hidden border-l border-border bg-panel"
     style="contain: paint layout style"
   >
-    <CloudVersionHistory v-if="history" />
-    <CommentsPanel v-else-if="commenting" />
+    <CommentsPanel v-if="commenting" />
     <TabsRoot
-      v-show="!commenting && !history"
+      v-show="!commenting"
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col"
     >

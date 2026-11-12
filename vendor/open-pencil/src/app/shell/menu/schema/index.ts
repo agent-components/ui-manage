@@ -34,13 +34,6 @@ export const APP_MENU_SCHEMA = [
       { id: 'save', feature: 'document', label: 'Save', shortcut: 'MOD+S' },
       { id: 'save-as', feature: 'document', label: 'Save As…', shortcut: 'MOD+SHIFT+S' },
       { id: 'save-to', feature: 'document', label: 'Save To…' },
-      {
-        id: 'save-version',
-        label: 'Save to Version History…',
-        shortcut: 'ALT+MOD+S',
-        feature: 'cloud-document'
-      },
-      { id: 'version-history', label: 'Show Version History', feature: 'cloud-document' },
       { type: 'separator' },
       {
         id: 'export-selection',

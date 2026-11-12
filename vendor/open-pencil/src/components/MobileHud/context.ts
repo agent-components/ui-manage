@@ -9,7 +9,6 @@ import IconZoomIn from "~icons/lucide/zoom-in";
 import { useEditorCommands } from "@open-pencil/vue/editor/commands";
 import { useI18n } from "@open-pencil/vue/i18n";
 
-import { isCloudBinding, openCloudShare } from "@/app/cloud/integration";
 import {
   useActiveEditorStoreRef,
   useEditorStore,
@@ -105,11 +104,7 @@ function createMobileHudContext() {
 
   const statusText = computed(() => "");
 
-  async function share() {
-    if (isCloudBinding(store.getStorageBinding())) {
-      openCloudShare(store);
-    }
-  }
+  function share() {}
 
   function disconnect() {}
 

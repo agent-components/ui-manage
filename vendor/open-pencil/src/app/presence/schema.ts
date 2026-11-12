@@ -1,6 +1,5 @@
 import * as v from 'valibot'
 
-import { MAX_PRESENCE_NAME_LENGTH } from '@open-pencil/cloud/contract'
 import { ZOOM_MAX, ZOOM_MIN } from '@open-pencil/core/constants'
 
 import type { RemotePeer } from '@/app/presence/types'
@@ -13,7 +12,7 @@ export const MAX_AGENTS_PER_PEER = 16
 const MAX_SELECTION = 256
 /** Outlines an agent draws around JSX it is still streaming. */
 export const MAX_OUTLINE = 32
-export const MAX_NAME_LENGTH = MAX_PRESENCE_NAME_LENGTH
+export const MAX_NAME_LENGTH = 64
 const MAX_ID = 64
 
 const finiteSchema = v.pipe(v.number(), v.finite())

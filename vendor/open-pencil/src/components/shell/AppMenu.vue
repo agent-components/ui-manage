@@ -47,7 +47,6 @@ import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import { animationsEnabled } from '@/app/shell/motion'
 import { resolvedAppTheme } from '@/app/shell/theme'
 import BrandMark from '@/components/brand/BrandMark.vue'
-import { CloudDocumentStatusHost } from '@/components/cloud/integration'
 import IconButton from '@/components/ui/button/IconButton.vue'
 import { useScrollOverflow } from '@/components/ui/list/useScrollOverflow'
 import AppShortcutText from '@/components/ui/menu/AppShortcutText.vue'
@@ -139,7 +138,6 @@ const { overflowStart, overflowEnd, scrollTowardHidden } = useScrollOverflow(men
       >
         只读预览 · 随作者保存更新
       </span>
-      <CloudDocumentStatusHost />
       <IconButton
         v-if="canManageShare"
         label="分享"
