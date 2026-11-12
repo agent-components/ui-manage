@@ -1,5 +1,3 @@
-import type { ChatTransport, UIMessage } from 'ai'
-
 import type { EditorStore } from '@/app/editor/session/create'
 import { createNavigationBenchmarkHooks } from '@/app/performance/navigation/hooks'
 import type { NavigationBenchmarkHooks } from '@/app/performance/navigation/hooks'
@@ -15,7 +13,6 @@ export interface OpenPencilTestHooks {
 
 export interface OpenPencilWindowAPI {
   getStore?: () => EditorStore
-  setChatTransport?: (factory: () => ChatTransport<UIMessage>) => void
   openFile?: (path: string) => Promise<void>
   test?: OpenPencilTestHooks
 }
@@ -39,12 +36,6 @@ export function setOpenPencilStore(store: EditorStore) {
     const testHooks = (api.test ??= {})
     testHooks.navigation = createNavigationBenchmarkHooks(store)
   }
-}
-
-export function exposeChatTransportOverride(
-  setChatTransport: (factory: () => ChatTransport<UIMessage>) => void
-) {
-  windowAPI().setChatTransport = setChatTransport
 }
 
 export function setOpenPencilOpenFileHandler(openFile: (path: string) => Promise<void>) {

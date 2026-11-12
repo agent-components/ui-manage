@@ -1,15 +1,14 @@
 import { resolve } from "node:path";
 
 /**
- * Published `@open-pencil/*` resolve from npm. Only shim tarball holes, unpublished
- * collab, and harness stubs (not installed).
+ * Published `@open-pencil/*` resolve from npm. Shim only the browser holes that
+ * the running editor still imports.
  */
 export function createOpenPencilAliases(rootDir: string) {
   const emptyNodeModule = resolve(rootDir, "vite/empty-node-module.ts");
   const shim = (...parts: string[]) => resolve(rootDir, "shims", ...parts);
   const removed = (...parts: string[]) =>
     resolve(rootDir, "shims/removed", ...parts);
-  const app = (...parts: string[]) => resolve(rootDir, "src/app", ...parts);
 
   return [
     { find: /^fs$/, replacement: emptyNodeModule },
@@ -46,66 +45,7 @@ export function createOpenPencilAliases(rootDir: string) {
     { find: /^@acemir\/cssom$/, replacement: shim("acemir-cssom.ts") },
     { find: "@", replacement: resolve(rootDir, "src") },
 
-    // harness → local stub (package not installed); feedback removed
-    { find: /^@open-pencil\/harness$/, replacement: app("harness.ts") },
-    { find: "@open-pencil/harness", replacement: app("harness.ts") },
-    {
-      find: /^@open-pencil\/feedback(\/.*)?$/,
-      replacement: removed("empty.ts"),
-    },
-
-    // Removed npm packages → shims (cloud/mcp/mermaid/ai not in runtime)
-    {
-      find: /^@open-pencil\/cloud\/client$/,
-      replacement: removed("cloud/client.ts"),
-    },
-    {
-      find: /^@open-pencil\/cloud\/contract$/,
-      replacement: removed("cloud/contract.ts"),
-    },
-    // `@open-pencil/mermaid` may still exist as a transitive of core; do not stub it —
-    // App paste path is disabled instead (see paste/content.ts).
-    {
-      find: /^@open-pencil\/mcp\/tools$/,
-      replacement: removed("mcp/tools.ts"),
-    },
-    {
-      find: /^@open-pencil\/mcp\/transport$/,
-      replacement: removed("mcp/transport.ts"),
-    },
-    {
-      find: /^@open-pencil\/mcp\/discovery$/,
-      replacement: removed("mcp/discovery.ts"),
-    },
-    { find: /^ai$/, replacement: removed("ai.ts") },
-    {
-      find: /^@ai-sdk\/anthropic$/,
-      replacement: removed("ai-sdk/anthropic.ts"),
-    },
-    {
-      find: /^@ai-sdk\/deepseek$/,
-      replacement: removed("ai-sdk/deepseek.ts"),
-    },
-    {
-      find: /^@ai-sdk\/google$/,
-      replacement: removed("ai-sdk/google.ts"),
-    },
-    {
-      find: /^@ai-sdk\/openai$/,
-      replacement: removed("ai-sdk/openai.ts"),
-    },
-    {
-      find: /^@ai-sdk\/valibot$/,
-      replacement: removed("ai-sdk/valibot.ts"),
-    },
-    {
-      find: /^@ai-sdk\/vue$/,
-      replacement: removed("ai-sdk/vue.ts"),
-    },
-    {
-      find: /^@posthog\/core\/error-tracking$/,
-      replacement: removed("posthog-error-tracking.ts"),
-    },
+    // Core markdown parsing imports these packages; they are not installed.
     {
       find: /^micromark-extension-gfm$/,
       replacement: removed("markdown-empty.ts"),
@@ -123,22 +63,6 @@ export function createOpenPencilAliases(rootDir: string) {
       replacement: removed("markdown-empty.ts"),
     },
     {
-      find: /^@agentclientprotocol\/sdk$/,
-      replacement: removed("acp-sdk.ts"),
-    },
-    {
-      find: /^@smithy\/fetch-http-handler$/,
-      replacement: removed("smithy-fetch.ts"),
-    },
-    {
-      find: /^@openrouter\/ai-sdk-provider$/,
-      replacement: removed("openrouter.ts"),
-    },
-    {
-      find: /^partial-json$/,
-      replacement: removed("partial-json.ts"),
-    },
-    {
       find: /^vue-stream-markdown\/index\.css$/,
       replacement: removed("vue-stream-markdown.css"),
     },
@@ -150,32 +74,8 @@ export function createOpenPencilAliases(rootDir: string) {
       find: /^@stream-markdown\/code$/,
       replacement: removed("stream-markdown-code.ts"),
     },
-    {
-      find: /^@aws-sdk\/client-s3$/,
-      replacement: removed("aws-s3.ts"),
-    },
-    {
-      find: /^qrcode$/,
-      replacement: removed("qrcode.ts"),
-    },
-    {
-      find: /^webmcp-types$/,
-      replacement: removed("webmcp-types.ts"),
-    },
 
     // Published package holes
-    {
-      find: /^@open-pencil\/vue\/lifecycle\/overlays$/,
-      replacement: shim("vue/lifecycle/overlays/index.ts"),
-    },
-    {
-      find: "@open-pencil/vue/lifecycle/overlays",
-      replacement: shim("vue/lifecycle/overlays"),
-    },
-    {
-      find: /^@open-pencil\/vue\/shared\/frame$/,
-      replacement: shim("vue/shared/frame.ts"),
-    },
     {
       find: /^@open-pencil\/vue\/primitives\/Toolbar$/,
       replacement: shim("vue/primitives/Toolbar.ts"),
@@ -183,32 +83,6 @@ export function createOpenPencilAliases(rootDir: string) {
     {
       find: "@open-pencil/vue/primitives/Toolbar",
       replacement: shim("vue/primitives/Toolbar.ts"),
-    },
-    {
-      find: /^@open-pencil\/vue\/editor\/keyboard$/,
-      replacement: shim("vue/editor/keyboard/index.ts"),
-    },
-    {
-      find: "@open-pencil/vue/editor/keyboard",
-      replacement: shim("vue/editor/keyboard"),
-    },
-    {
-      find: /^@open-pencil\/scene-graph\/constraints$/,
-      replacement: shim("scene-graph/constraints.ts"),
-    },
-
-    // Multiplayer collab disabled — stub package
-    {
-      find: /^@open-pencil\/collab$/,
-      replacement: resolve(rootDir, "src/shims/removed/collab.ts"),
-    },
-    {
-      find: "@open-pencil/collab",
-      replacement: resolve(rootDir, "src/shims/removed"),
-    },
-    {
-      find: "#collab",
-      replacement: resolve(rootDir, "src/shims/removed/collab.ts"),
     },
 
     // stock canvaskit-wasm → published patched build
