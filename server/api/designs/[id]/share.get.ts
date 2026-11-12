@@ -1,7 +1,6 @@
 import { createError, defineEventHandler, getRouterParam } from "h3";
 import { requireUser } from "../../../utils/auth";
-import { prisma } from "../../../utils/prisma";
-import { sharePayload } from "../../../utils/share";
+import { readShareToken, sharePayload } from "../../../utils/share";
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event);
@@ -10,13 +9,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "缺少 id" });
   }
 
-  const design = await prisma.design.findFirst({
-    where: { id, ownerAccount: user.account },
-    select: { shareToken: true },
-  });
-  if (!design) {
-    throw createError({ statusCode: 404, message: "设计稿不存在" });
-  }
-
-  return sharePayload(design.shareToken);
+  const shareToken = await readShareToken(id, user.account);
+  return sharePayload(shareToken);
 });

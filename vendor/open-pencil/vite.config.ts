@@ -180,6 +180,7 @@ export default defineConfig(async ({ command, mode }) => {
               "/mcp": {
                 target: process.env.UI_MANAGE_API || "http://127.0.0.1:3001",
                 changeOrigin: true,
+                xfwd: true,
               },
             },
           }

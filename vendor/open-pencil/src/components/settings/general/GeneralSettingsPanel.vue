@@ -19,7 +19,6 @@ import { animationPreference } from '@/app/shell/motion'
 import { useAppTheme } from '@/app/shell/theme'
 import CredentialSettingsSection from '@/components/settings/credentials/CredentialSettingsSection.vue'
 import AccentColorPicker from '@/components/settings/general/AccentColorPicker.vue'
-import CollaborationNameSection from '@/components/settings/general/CollaborationNameSection.vue'
 import SettingsGroup from '@/components/settings/layout/SettingsGroup.vue'
 import SettingsRow from '@/components/settings/layout/SettingsRow.vue'
 import SettingsSection from '@/components/settings/layout/SettingsSection.vue'
@@ -139,8 +138,6 @@ const interfaceScaleOptions = computed(() => {
     </SettingsSection>
 
     <template v-if="!isUiManageEmbed">
-      <CollaborationNameSection />
-
       <SettingsSection>
         <template #title>{{ recovery.settingsTitle }}</template>
 

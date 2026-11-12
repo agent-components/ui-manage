@@ -93,10 +93,41 @@ export function toolInputSchema(tool: ToolDef): Record<string, unknown> {
   };
 }
 
+const emptyInputSchema = {
+  type: "object",
+  properties: {},
+  additionalProperties: false,
+} as const;
+
+/** 不改画稿，只读写当前设计稿的那一条分享链接。 */
+export const MCP_SHARE_TOOLS = [
+  {
+    name: "create_share_link",
+    description:
+      "为当前设计稿创建只读分享链接。已经有链接时直接返回那一条，不会再创建新的。",
+    inputSchema: emptyInputSchema,
+  },
+  {
+    name: "get_share_link",
+    description:
+      "查看当前设计稿的只读分享链接。还没有链接时不会创建，enabled 为 false。",
+    inputSchema: emptyInputSchema,
+  },
+] as const;
+
+export type McpShareToolName = (typeof MCP_SHARE_TOOLS)[number]["name"];
+
+export function isShareTool(name: string): name is McpShareToolName {
+  return MCP_SHARE_TOOLS.some((tool) => tool.name === name);
+}
+
 export function listMcpToolDescriptors() {
-  return mcpTools.map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    inputSchema: toolInputSchema(tool),
-  }));
+  return [
+    ...mcpTools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: toolInputSchema(tool),
+    })),
+    ...MCP_SHARE_TOOLS,
+  ];
 }

@@ -8,11 +8,18 @@ import {
 import type { AuthUser } from "./auth";
 import type { McpDesign } from "./mcp-design";
 import { withMcpDocument } from "./mcp-document";
-import { listMcpToolDescriptors, toolByName, toolMutates } from "./mcp-tools";
+import {
+  isShareTool,
+  listMcpToolDescriptors,
+  toolByName,
+  toolMutates,
+} from "./mcp-tools";
+import { ensureShareToken, readShareToken, shareLinkView } from "./share";
 
 export type McpRequestContext = {
   user: AuthUser;
   design: McpDesign;
+  origin: string;
 };
 
 export const mcpContext = new AsyncLocalStorage<McpRequestContext>();
@@ -34,6 +41,30 @@ function createServer(): McpServer {
   }));
 
   server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (isShareTool(request.params.name)) {
+      const { user, design, origin } = requireContext();
+      try {
+        const token =
+          request.params.name === "create_share_link"
+            ? await ensureShareToken(design.id, user.account)
+            : await readShareToken(design.id, user.account);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(shareLinkView(token, origin), null, 2),
+            },
+          ],
+        };
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: message }],
+        };
+      }
+    }
+
     const tool = toolByName(request.params.name);
     if (!tool) {
       return {

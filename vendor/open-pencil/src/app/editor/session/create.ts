@@ -1,164 +1,186 @@
-import { shallowReactive } from 'vue'
+import { shallowReactive } from "vue";
 
-import { createEditor } from '@open-pencil/core'
-import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
-import { SceneGraph } from '@open-pencil/scene-graph'
-import { createShaderRasterizer } from '@open-pencil/vue/canvas/surface'
+import { createEditor } from "@open-pencil/core";
+import { BUILTIN_IO_FORMATS, IORegistry } from "@open-pencil/core/io";
+import { SceneGraph } from "@open-pencil/scene-graph";
+import { createShaderRasterizer } from "@open-pencil/vue/canvas/surface";
 
-import { useDisplayIdentity } from '@/app/identity'
+import { currentUserName } from "@/app/integrations/ui-manage/auth";
 import {
   getActiveEditorStore,
   setActiveEditorStore,
-  useEditorStore
-} from '@/app/editor/active-store'
-import { resolveFigmaClipboardImages } from '@/app/editor/clipboard/figma-images'
-import { bindClipboardNotifications } from '@/app/editor/clipboard/notifications'
-import { loadFont } from '@/app/editor/fonts'
-import { appIcons } from '@/app/editor/icons/provider'
-import { createRecentPages } from '@/app/editor/pages/recent'
-import { createCanvasPaneRegistry } from '@/app/editor/panes/registry'
-import { createEditorPreparationController } from '@/app/editor/preparation/controller'
+  useEditorStore,
+} from "@/app/editor/active-store";
+import { resolveFigmaClipboardImages } from "@/app/editor/clipboard/figma-images";
+import { bindClipboardNotifications } from "@/app/editor/clipboard/notifications";
+import { loadFont } from "@/app/editor/fonts";
+import { appIcons } from "@/app/editor/icons/provider";
+import { createRecentPages } from "@/app/editor/pages/recent";
+import { createCanvasPaneRegistry } from "@/app/editor/panes/registry";
+import { createEditorPreparationController } from "@/app/editor/preparation/controller";
 import {
   createEditorPreparationEvents,
   type EditorPreparationEventName,
-  type EditorPreparationEvents
-} from '@/app/editor/preparation/events'
-import { pageProgressUnit } from '@/app/editor/preparation/types'
+  type EditorPreparationEvents,
+} from "@/app/editor/preparation/events";
+import { pageProgressUnit } from "@/app/editor/preparation/types";
 import {
   createEditorComputedRefs,
   createEditorStoreModules,
-  defineEditorStoreAccessors
-} from '@/app/editor/session/modules'
-import { scopedStoreFactory } from '@/app/editor/session/scope'
+  defineEditorStoreAccessors,
+} from "@/app/editor/session/modules";
+import { scopedStoreFactory } from "@/app/editor/session/scope";
 import {
   createInitialAppEditorState,
   type AppEditorState,
-  type AppSwitchPageOptions
-} from '@/app/editor/session/types'
-import { notificationMessages } from '@/app/i18n/notifications'
-import { createDeferred } from '@/app/runtime/deferred'
-import { toast } from '@/app/shell/ui'
-import { IS_BROWSER, IS_TAURI } from '@/constants'
+  type AppSwitchPageOptions,
+} from "@/app/editor/session/types";
+import { notificationMessages } from "@/app/i18n/notifications";
+import { createDeferred } from "@/app/runtime/deferred";
+import { toast } from "@/app/shell/ui";
+import { IS_BROWSER, IS_TAURI } from "@/constants";
 
-export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from '@open-pencil/core'
-export type { EditorToolDef as ToolDef, Tool } from '@open-pencil/core'
+export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from "@open-pencil/core";
+export type { EditorToolDef as ToolDef, Tool } from "@open-pencil/core";
 
 function buildEditorStore(initialGraph?: SceneGraph) {
-  const graph = initialGraph ?? new SceneGraph()
+  const graph = initialGraph ?? new SceneGraph();
 
-  const state = shallowReactive<AppEditorState>(createInitialAppEditorState(graph.getPages()[0].id))
+  const state = shallowReactive<AppEditorState>(
+    createInitialAppEditorState(graph.getPages()[0].id)
+  );
 
-  const viewportSize = { width: 0, height: 0 }
+  const viewportSize = { width: 0, height: 0 };
   const editor = createEditor({
     graph,
     state,
     loadFont,
     icons: appIcons,
     shaderRasterizer: createShaderRasterizer(),
-    resolveFigmaClipboardImages: IS_TAURI ? resolveFigmaClipboardImages : undefined,
+    resolveFigmaClipboardImages: IS_TAURI
+      ? resolveFigmaClipboardImages
+      : undefined,
     skipInitialGraphSetup: !!initialGraph,
-    getUserName: () => useDisplayIdentity().name.value,
+    getUserName: () => currentUserName(),
     getViewportSize: () =>
       viewportSize.width > 0 && viewportSize.height > 0
         ? viewportSize
         : {
             width: IS_BROWSER ? window.innerWidth : 1920,
-            height: IS_BROWSER ? window.innerHeight : 1080
-          }
-  })
-  const canvasReadiness = createDeferred<undefined>()
-  const io = new IORegistry(BUILTIN_IO_FORMATS)
-  bindClipboardNotifications(editor)
+            height: IS_BROWSER ? window.innerHeight : 1080,
+          },
+  });
+  const canvasReadiness = createDeferred<undefined>();
+  const io = new IORegistry(BUILTIN_IO_FORMATS);
+  bindClipboardNotifications(editor);
 
   if (initialGraph) {
-    editor.subscribeToGraph()
+    editor.subscribeToGraph();
   }
 
-  const { selectedNodes, selectedNode, layerTree, disposeSelection } = createEditorComputedRefs(
-    editor,
-    state
-  )
+  const { selectedNodes, selectedNode, layerTree, disposeSelection } =
+    createEditorComputedRefs(editor, state);
   // Mirror the document color space into app state so UI can react to it.
   const syncDocumentColorSpace = () => {
-    state.documentColorSpace = editor.graph.documentColorSpace
-  }
-  syncDocumentColorSpace()
+    state.documentColorSpace = editor.graph.documentColorSpace;
+  };
+  syncDocumentColorSpace();
   const stopColorSpaceSync = editor.onEditorEvent(
-    'document:color-space-changed',
+    "document:color-space-changed",
     syncDocumentColorSpace
-  )
-  editor.onEditorEvent('graph:replaced', syncDocumentColorSpace)
-  const recentPages = createRecentPages(editor)
+  );
+  editor.onEditorEvent("graph:replaced", syncDocumentColorSpace);
+  const recentPages = createRecentPages(editor);
 
-  const preparationEvents = createEditorPreparationEvents()
-  const preparationController = createEditorPreparationController(state, preparationEvents, {
-    editor
-  })
-  const modules = createEditorStoreModules(editor, state, io, viewportSize, preparationController)
+  const preparationEvents = createEditorPreparationEvents();
+  const preparationController = createEditorPreparationController(
+    state,
+    preparationEvents,
+    {
+      editor,
+    }
+  );
+  const modules = createEditorStoreModules(
+    editor,
+    state,
+    io,
+    viewportSize,
+    preparationController
+  );
 
   // ─── Public API ───────────────────────────────────────────────
   // Spread all core Editor methods, then override getters and add app-specific.
 
-  const panes = createCanvasPaneRegistry(state)
+  const panes = createCanvasPaneRegistry(state);
 
-  async function switchPage(pageId: string, options: AppSwitchPageOptions = {}) {
-    const page = editor.graph.getNode(pageId)
+  async function switchPage(
+    pageId: string,
+    options: AppSwitchPageOptions = {}
+  ) {
+    const page = editor.graph.getNode(pageId);
     const preparation =
       options.preparation ??
       preparationController.begin({
-        kind: 'page-switch',
-        phase: 'populating-page',
-        subject: page?.name ?? null
-      })
-    const ownsPreparation = options.preparation === undefined
-    let succeeded = false
+        kind: "page-switch",
+        phase: "populating-page",
+        subject: page?.name ?? null,
+      });
+    const ownsPreparation = options.preparation === undefined;
+    let succeeded = false;
     try {
       const prepared = await editor.preparePage(pageId, {
         signal: preparation.signal,
         onProgress: (progress) => {
-          options.onProgress?.(progress)
+          options.onProgress?.(progress);
           preparation.update({
             ...progress,
-            unit: pageProgressUnit(progress.phase)
-          })
-        }
-      })
-      preparation.signal.throwIfAborted()
+            unit: pageProgressUnit(progress.phase),
+          });
+        },
+      });
+      preparation.signal.throwIfAborted();
       if (prepared) {
-        editor.commitPageSwitch(prepared)
-        preparation.update({ phase: 'preparing-render', detail: page?.name ?? null })
-        await options.beforePresentation?.()
-        preparation.signal.throwIfAborted()
-        await preparationController.waitForPresentation(preparation.id, editor.state)
-        preparation.signal.throwIfAborted()
+        editor.commitPageSwitch(prepared);
+        preparation.update({
+          phase: "preparing-render",
+          detail: page?.name ?? null,
+        });
+        await options.beforePresentation?.();
+        preparation.signal.throwIfAborted();
+        await preparationController.waitForPresentation(
+          preparation.id,
+          editor.state
+        );
+        preparation.signal.throwIfAborted();
       }
-      succeeded = true
+      succeeded = true;
     } catch (error) {
       if (preparation.signal.aborted) {
         // Another switch took over; its page is the one to show, so this one ends quietly.
         // A caller's own preparation reports its cancellation itself.
-        if (ownsPreparation) return
-        throw error
+        if (ownsPreparation) return;
+        throw error;
       }
       if (ownsPreparation) {
         const presentationTimedOut =
-          error instanceof Error && error.message === 'The operation was timed out'
+          error instanceof Error &&
+          error.message === "The operation was timed out";
         preparation.fail({
-          code: presentationTimedOut ? 'render-failed' : 'layout-failed',
+          code: presentationTimedOut ? "render-failed" : "layout-failed",
           message: error instanceof Error ? error.message : String(error),
-          retryable: true
-        })
+          retryable: true,
+        });
         if (presentationTimedOut) {
           toast.error(
             notificationMessages.get().operationFailed({
-              error: error instanceof Error ? error.message : String(error)
+              error: error instanceof Error ? error.message : String(error),
             })
-          )
+          );
         }
       }
-      throw error
+      throw error;
     } finally {
-      if (ownsPreparation && succeeded) preparation.complete()
+      if (ownsPreparation && succeeded) preparation.complete();
     }
   }
 
@@ -172,7 +194,7 @@ function buildEditorStore(initialGraph?: SceneGraph) {
       event: Event,
       handler: EditorPreparationEvents[Event]
     ) {
-      return preparationEvents.on(event, handler)
+      return preparationEvents.on(event, handler);
     },
     panes,
     selectedNodes,
@@ -193,20 +215,20 @@ function buildEditorStore(initialGraph?: SceneGraph) {
     // App-specific overrides and additions
     ...modules,
     dispose() {
-      stopColorSpaceSync()
-      recentPages.dispose()
-      disposeSelection()
-      modules.dispose()
-    }
-  }
+      stopColorSpaceSync();
+      recentPages.dispose();
+      disposeSelection();
+      modules.dispose();
+    },
+  };
 
-  defineEditorStoreAccessors(store, editor)
+  defineEditorStoreAccessors(store, editor);
 
-  return store
+  return store;
 }
 
-export const createEditorStore = scopedStoreFactory(buildEditorStore)
+export const createEditorStore = scopedStoreFactory(buildEditorStore);
 
-export type EditorStore = ReturnType<typeof createEditorStore>
+export type EditorStore = ReturnType<typeof createEditorStore>;
 
-export { getActiveEditorStore, setActiveEditorStore, useEditorStore }
+export { getActiveEditorStore, setActiveEditorStore, useEditorStore };

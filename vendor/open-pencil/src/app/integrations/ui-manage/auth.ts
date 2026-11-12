@@ -165,3 +165,16 @@ export function useUiManageAuth() {
     logout,
   };
 }
+
+/** Logged-in account label. Empty when nobody is signed in. */
+export function currentUserName(): string {
+  const auth = useUiManageAuth();
+  if (!auth.ready.value && typeof localStorage !== "undefined") {
+    auth.loadFromStorage();
+  }
+  return (
+    auth.user.value?.displayName?.trim() ||
+    auth.user.value?.account?.trim() ||
+    ""
+  );
+}

@@ -13,7 +13,7 @@ import {
   useActiveEditorStoreRef,
   useEditorStore,
 } from "@/app/editor/active-store";
-import { useDisplayIdentity } from "@/app/identity";
+import { currentUserName } from "@/app/integrations/ui-manage/auth";
 import { saveActiveToUiManage } from "@/app/integrations/ui-manage/bridge";
 import { isUiManageEmbed } from "@/app/integrations/ui-manage/mode";
 import {
@@ -23,6 +23,7 @@ import {
 import type { FollowTarget } from "@/app/presence/types";
 import { openFileDialog } from "@/app/shell/menu/use";
 import { createTab } from "@/app/tabs";
+import { PEER_COLORS } from "@/constants";
 import { toolIcons } from "@/components/icons";
 import { presenceRows } from "@/components/presence/rows";
 import type { ToolbarActionItem } from "@/components/toolbar/types";
@@ -31,7 +32,6 @@ type MenuAction = ToolbarActionItem;
 
 function createMobileHudContext() {
   const store = useEditorStore();
-  const identity = useDisplayIdentity();
   const { common, collaboration } = useI18n();
   const { getCommand } = useEditorCommands();
 
@@ -41,9 +41,9 @@ function createMobileHudContext() {
     roomId: null as string | null,
     status: null,
     peers: [] as never[],
-    localName: identity.name.value,
-    localColor: identity.color,
-    hasChosenName: identity.hasChosenName.value,
+    localName: currentUserName(),
+    localColor: PEER_COLORS[0],
+    hasChosenName: currentUserName().length > 0,
   }));
   const following = computed(() => null);
   const tabStore = useActiveEditorStoreRef();
