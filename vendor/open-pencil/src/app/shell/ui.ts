@@ -4,7 +4,6 @@ import { ref, toRaw } from 'vue'
 
 import { ReadOnlyDocumentError } from '@open-pencil/core'
 
-import { recordRuntimeError } from '@/app/diagnostics'
 import type { ProgressAmount } from '@/components/ui/feedback/progress'
 import type { ToastVariant } from '@/components/ui/feedback/toast'
 import { IS_TAURI } from '@/constants'
@@ -154,7 +153,6 @@ function setupGlobalErrorHandler() {
       e.preventDefault()
       return
     }
-    recordRuntimeError(e.error ?? e.message, 'window')
     error(e.message || 'An unexpected error occurred')
   })
   useEventListener(window, 'unhandledrejection', (e) => {
@@ -162,7 +160,6 @@ function setupGlobalErrorHandler() {
       e.preventDefault()
       return
     }
-    recordRuntimeError(e.reason, 'rejection')
     const msg = e.reason instanceof Error ? e.reason.message : String(e.reason)
     error(msg || 'An unexpected error occurred')
   })

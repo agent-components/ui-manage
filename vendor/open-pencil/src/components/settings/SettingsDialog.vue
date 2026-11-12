@@ -48,7 +48,7 @@ interface SectionItem {
   icon: Component
 }
 
-/** ui-manage: only app prefs — no storage / notifications / privacy / diagnostics. */
+/** ui-manage: only app prefs — no storage / notifications / privacy. */
 const groups = computed<{ label: string; sections: SectionItem[] }[]>(() => [
   {
     label: settings.value.groupApp,

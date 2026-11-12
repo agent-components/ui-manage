@@ -4,6 +4,18 @@ export type AuthUser = {
   id: string;
   account: string;
   displayName: string;
+  email?: string | null;
+  phone?: string | null;
+  aboutMe?: string | null;
+};
+
+export type ProfileUpdate = {
+  displayName: string;
+  email?: string | null;
+  phone?: string | null;
+  aboutMe?: string | null;
+  currentPassword?: string;
+  newPassword?: string;
 };
 
 const TOKEN_KEY = "ui_manage_token";
@@ -54,6 +66,12 @@ export function useUiManageAuth() {
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
   }
 
+  function applyUser(nextUser: AuthUser) {
+    user.value = nextUser;
+    sessionOk = true;
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+  }
+
   function clear() {
     token.value = null;
     user.value = null;
@@ -100,6 +118,25 @@ export function useUiManageAuth() {
     return result;
   }
 
+  async function refreshUser() {
+    if (!ready.value) loadFromStorage();
+    const res = await fetch("/api/auth/me", { headers: authHeaders() });
+    const me = await readJson<AuthUser>(res);
+    applyUser(me);
+    return me;
+  }
+
+  async function updateProfile(body: ProfileUpdate) {
+    const res = await fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    const me = await readJson<AuthUser>(res);
+    applyUser(me);
+    return me;
+  }
+
   async function logout() {
     try {
       if (token.value) {
@@ -122,6 +159,8 @@ export function useUiManageAuth() {
     clear,
     authHeaders,
     ensureSession,
+    refreshUser,
+    updateProfile,
     login,
     logout,
   };

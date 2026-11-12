@@ -13,7 +13,6 @@ import { prepareGraphFonts } from "@open-pencil/core/text";
 import type { DocumentKind, SceneGraph } from "@open-pencil/scene-graph";
 
 import { setOpenPencilStore } from "@/app/browser-bridge";
-import { describeDiagnosticError } from "@/app/diagnostics";
 import { confirmAllDocuments } from "@/app/document/close/all";
 import { confirmDocumentClose } from "@/app/document/close/controller";
 import { requestDocumentClose } from "@/app/document/close/prompt";

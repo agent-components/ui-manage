@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 
-import { openSettingsDialog } from '@/app/settings/dialog'
 import { resolvedAppTheme } from '@/app/shell/theme'
 import BrandMark from '@/components/brand/BrandMark.vue'
-import AccountAvatar from '@/components/presence/AccountAvatar.vue'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import { AppConfirmationDialog, AppDialog } from '@/components/ui/dialog'
 import AppAlert from '@/components/ui/feedback/AppAlert.vue'
@@ -23,14 +20,13 @@ import {
   AppTableRow
 } from '@/components/ui/table'
 
-import { useUiManageAuth } from './auth'
+import AccountMenu from './AccountMenu.vue'
 import { useUiManageDesigns, type Design } from './designs-api'
 import ShareDialog from './ShareDialog.vue'
 
 const DEFAULT_NAME = '未命名设计文件'
 
 const router = useRouter()
-const { user, logout } = useUiManageAuth()
 const api = useUiManageDesigns()
 
 const designs = ref<Design[]>([])
@@ -59,9 +55,6 @@ const deleteTarget = ref<Design | null>(null)
 
 const shareOpen = ref(false)
 const shareDesignId = ref('')
-const accountMenuOpen = ref(false)
-
-const displayName = computed(() => user.value?.displayName || user.value?.account || '')
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -165,17 +158,6 @@ async function confirmDelete() {
   }
 }
 
-function openSystemSettings() {
-  accountMenuOpen.value = false
-  openSettingsDialog()
-}
-
-async function onLogout() {
-  accountMenuOpen.value = false
-  await logout()
-  await router.replace('/login')
-}
-
 function formatTime(value: string) {
   const d = new Date(value)
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -226,45 +208,7 @@ onMounted(refresh)
       </nav>
 
       <div class="mt-auto border-t border-border px-3 py-3">
-        <PopoverRoot v-model:open="accountMenuOpen">
-          <PopoverTrigger
-            class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left outline-none transition-colors hover:bg-hover focus-visible:ring-1 focus-visible:ring-panel-focus"
-            :aria-label="displayName ? `${displayName}，账户菜单` : '账户菜单'"
-          >
-            <span class="min-w-0 truncate text-[13px] text-surface">{{ displayName }}</span>
-            <AccountAvatar
-              v-if="user"
-              :id="user.id"
-              :name="displayName || user.account"
-              size="sm"
-            />
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent
-              side="top"
-              align="start"
-              :side-offset="8"
-              class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
-            >
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="openSystemSettings"
-              >
-                <icon-lucide-settings class="size-3.5 text-muted" />
-                系统设置
-              </button>
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover"
-                @click="onLogout"
-              >
-                <icon-lucide-log-out class="size-3.5 text-muted" />
-                退出登录
-              </button>
-            </PopoverContent>
-          </PopoverPortal>
-        </PopoverRoot>
+        <AccountMenu placement="sidebar" />
       </div>
     </aside>
 
