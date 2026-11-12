@@ -4,9 +4,13 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const root = dirname(fileURLToPath(import.meta.url));
+const here = dirname(fileURLToPath(import.meta.url));
+// Release layout keeps this file beside .output. In the repo it lives in scripts/.
+const root = existsSync(resolve(here, ".output/server/index.mjs"))
+  ? here
+  : resolve(here, "..");
 
 function loadEnv(file) {
   if (!existsSync(file)) return;
@@ -34,4 +38,4 @@ process.env.NODE_ENV ||= "production";
 process.env.PORT ||= "3000";
 process.env.HOST ||= "0.0.0.0";
 
-await import("./.output/server/index.mjs");
+await import(pathToFileURL(resolve(root, ".output/server/index.mjs")).href);
