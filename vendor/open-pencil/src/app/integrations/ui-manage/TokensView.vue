@@ -1,27 +1,23 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 
-import { resolvedAppTheme } from '@/app/shell/theme'
 import { toast } from '@/app/shell/ui'
-import BrandMark from '@/components/brand/BrandMark.vue'
+
 import AppButton from '@/components/ui/button/AppButton.vue'
 import { AppConfirmationDialog, AppDialog } from '@/components/ui/dialog'
 import AppAlert from '@/components/ui/feedback/AppAlert.vue'
-import AppPlaceholder from '@/components/ui/feedback/AppPlaceholder.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
 import {
   AppTable,
   AppTableBody,
   AppTableCell,
-  AppTableEmpty,
   AppTableHead,
   AppTableHeader,
   AppTablePlaceholder,
   AppTableRow
 } from '@/components/ui/table'
 
-import AccountMenu from './AccountMenu.vue'
+import ManageShell from './ManageShell.vue'
 import { useUiManageTokens, type ApiTokenRow, type CreatedApiToken } from './tokens-api'
 
 const api = useUiManageTokens()
@@ -42,6 +38,13 @@ const revealedToken = ref<CreatedApiToken | null>(null)
 
 const revokeOpen = ref(false)
 const revokeTarget = ref<ApiTokenRow | null>(null)
+
+const tableUi = {
+  root: 'console-table flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent',
+  scroller: 'console-scroll min-h-0 flex-1 overflow-auto',
+  table: 'console-grid',
+  footer: 'border-0 bg-transparent p-0'
+}
 
 async function refresh() {
   loading.value = true
@@ -143,212 +146,117 @@ function formatTime(value: string | null) {
   if (!value) return '—'
   const d = new Date(value)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 onMounted(refresh)
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 bg-canvas text-surface">
-    <aside
-      class="hidden w-[220px] shrink-0 flex-col border-r border-border bg-panel md:flex"
-      aria-label="主导航"
-    >
-      <div class="flex items-center gap-2.5 px-5 py-5">
-        <BrandMark
-          variant="app-icon"
-          :appearance="resolvedAppTheme"
-          class="size-8 shrink-0"
-          decorative
-        />
-        <div class="min-w-0 leading-tight">
-          <p class="truncate text-[15px] font-semibold tracking-tight text-surface">屏幕设计</p>
-          <p class="mt-0.5 truncate text-[11px] text-muted">设计文件管理</p>
-        </div>
-      </div>
-
-      <nav class="flex-1 space-y-1 px-3 pt-1">
-        <RouterLink
-          to="/designs"
-          class="flex items-center gap-2.5 rounded-md py-2.5 pr-3 pl-3 text-[13px] font-medium text-muted outline-none transition-colors hover:bg-hover hover:text-surface"
-        >
-          <icon-lucide-layout-template class="size-4 shrink-0 opacity-90" />
-          设计文件
-        </RouterLink>
-        <div
-          class="relative flex items-center gap-2.5 rounded-md bg-accent/10 py-2.5 pr-3 pl-3 text-[13px] font-medium text-primary"
-          aria-current="page"
-        >
-          <span
-            class="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-r-full bg-primary"
-            aria-hidden="true"
-          />
-          <icon-lucide-key-round class="size-4 shrink-0 opacity-90" />
-          访问令牌
-        </div>
-      </nav>
-
-      <div class="mt-auto border-t border-border px-3 py-3">
-        <AccountMenu placement="sidebar" />
-      </div>
-    </aside>
-
-    <div class="flex min-w-0 flex-1 flex-col overflow-auto">
-      <header
-        class="flex items-center justify-between gap-3 border-b border-border bg-panel px-4 py-3 md:hidden"
+  <ManageShell
+    active="tokens"
+    title="访问令牌"
+    description="给第三方 MCP 客户端使用。明文只在创建时显示一次。"
+  >
+    <template #actions>
+      <AppButton
+        class="console-btn"
+        color="primary"
+        variant="solid"
+        size="md"
+        :disabled="creating"
+        @click="openCreate"
       >
-        <div class="flex min-w-0 items-center gap-2">
-          <BrandMark
-            variant="app-icon"
-            :appearance="resolvedAppTheme"
-            class="size-7 shrink-0"
-            decorative
-          />
-          <span class="truncate text-[15px] font-semibold">访问令牌</span>
-        </div>
-        <AccountMenu placement="header" />
-      </header>
+        <template #leading>
+          <icon-lucide-plus class="size-3.5" />
+        </template>
+        创建令牌
+      </AppButton>
+    </template>
 
-      <main class="flex w-full flex-1 flex-col gap-4 px-5 py-5 sm:px-6 lg:px-8">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div class="min-w-0">
-            <span
-              class="inline-flex h-5 items-center rounded px-1.5 text-[11px] font-medium text-primary"
-              style="background: color-mix(in srgb, var(--color-accent) 14%, transparent)"
-            >
-              访问令牌
-            </span>
-            <h1 class="mt-2 text-[22px] leading-none font-semibold tracking-tight text-surface">
-              访问令牌
-            </h1>
-            <p class="mt-2 text-[13px] text-muted">
-              给第三方 MCP 客户端使用。明文只在创建时显示一次。
-            </p>
-          </div>
-          <AppButton
-            color="primary"
-            variant="solid"
-            size="md"
-            :disabled="creating"
-            @click="openCreate"
-          >
-            <template #leading>
-              <icon-lucide-plus class="size-3.5" />
-            </template>
-            创建令牌
-          </AppButton>
-        </div>
+    <AppAlert v-if="error" tone="error" :heading="error" />
 
-        <AppAlert v-if="error" tone="error" :heading="error" />
-
-        <section
-          class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm"
-        >
-          <AppPlaceholder
-            v-if="!loading && !error && !tokens.length"
-            label="还没有访问令牌"
-            description="创建后用于连接 MCP 画稿。"
-            size="panel"
-            class="min-h-[320px]"
-          >
-            <template #icon>
-              <icon-lucide-key-round class="size-5" />
-            </template>
-            <template #action>
-              <AppButton color="primary" variant="solid" size="sm" @click="openCreate">
-                创建令牌
-              </AppButton>
-            </template>
-          </AppPlaceholder>
-
-          <AppTable
-            v-else
-            label="访问令牌列表"
-            :loading="loading ? 'first' : false"
-            loading-label="加载中…"
-            :ui="{
-              root: 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent',
-              scroller: 'min-h-0 flex-1 overflow-auto',
-              footer: 'mt-auto border-t border-border px-5 py-2.5'
-            }"
-          >
-            <AppTableHeader>
-              <AppTableRow>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">名称</AppTableHead>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">前缀</AppTableHead>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">
-                  创建时间
-                </AppTableHead>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">
-                  最近使用
-                </AppTableHead>
-                <AppTableHead class="h-10 w-36 px-4 text-[12px] first:pl-5 last:pr-5">
-                  操作
-                </AppTableHead>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTablePlaceholder
-              v-if="loading"
-              :columns="[
-                { id: 'name' },
-                { id: 'prefix' },
-                { id: 'created' },
-                { id: 'used' },
-                { id: 'actions', actions: true }
-              ]"
-            />
-            <AppTableBody v-else>
-              <AppTableEmpty v-if="!tokens.length" :colspan="5">暂无访问令牌</AppTableEmpty>
-              <AppTableRow v-for="token in tokens" :key="token.id">
-                <AppTableCell class="h-14 px-4 text-[13px] first:pl-5 last:pr-5">
-                  <span class="font-medium text-surface">{{ token.name }}</span>
-                </AppTableCell>
-                <AppTableCell
-                  class="h-14 px-4 font-mono text-[13px] tabular-nums text-muted first:pl-5 last:pr-5"
+    <section class="console-card console-card-fill">
+      <AppTable
+        label="访问令牌列表"
+        :loading="loading ? 'first' : false"
+        loading-label="加载中…"
+        :ui="tableUi"
+      >
+        <AppTableHeader>
+          <AppTableRow>
+            <AppTableHead>名称</AppTableHead>
+            <AppTableHead>前缀</AppTableHead>
+            <AppTableHead>创建时间</AppTableHead>
+            <AppTableHead>最近使用</AppTableHead>
+            <AppTableHead class="console-col-ops-narrow">操作</AppTableHead>
+          </AppTableRow>
+        </AppTableHeader>
+        <AppTablePlaceholder
+          v-if="loading"
+          :columns="[
+            { id: 'name' },
+            { id: 'prefix' },
+            { id: 'created' },
+            { id: 'used' },
+            { id: 'actions', actions: true }
+          ]"
+        />
+        <AppTableBody v-else>
+          <tr v-if="!tokens.length" class="console-empty-row">
+            <td class="console-empty-cell" colspan="5">
+              <div class="console-empty">
+                <svg
+                  class="console-empty-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="none"
+                  aria-hidden="true"
                 >
-                  {{ token.tokenPrefix }}…
-                </AppTableCell>
-                <AppTableCell
-                  class="h-14 px-4 text-[13px] tabular-nums text-muted first:pl-5 last:pr-5"
-                >
-                  {{ formatTime(token.createdAt) }}
-                </AppTableCell>
-                <AppTableCell
-                  class="h-14 px-4 text-[13px] tabular-nums text-muted first:pl-5 last:pr-5"
-                >
-                  {{ formatTime(token.lastUsedAt) }}
-                </AppTableCell>
-                <AppTableCell class="h-14 px-4 text-[13px] first:pl-5 last:pr-5">
-                  <div class="flex items-center gap-3">
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-primary hover:underline"
-                      @click="copyMcpConfig(token)"
-                    >
-                      复制
-                    </button>
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-error hover:underline"
-                      @click="openRevoke(token)"
-                    >
-                      撤销
-                    </button>
-                  </div>
-                </AppTableCell>
-              </AppTableRow>
-            </AppTableBody>
-            <template #footer>
-              <div class="flex items-center justify-end text-[12px] text-muted">
-                <template v-if="loading">加载中…</template>
-                <template v-else>共 {{ tokens.length }} 条</template>
+                  <circle cx="16" cy="20" r="6.25" stroke="currentColor" stroke-width="1.4" />
+                  <path
+                    d="M21.2 20H31.5v3.2M27.6 20v3.2"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="16" cy="20" r="1.4" fill="currentColor" />
+                </svg>
+                <p class="console-empty-title">还没有访问令牌</p>
+                <p class="console-empty-desc">创建后用于连接 MCP 画稿。</p>
+                <button type="button" class="console-empty-action" @click="openCreate">
+                  创建令牌
+                </button>
               </div>
-            </template>
-          </AppTable>
-        </section>
-      </main>
-    </div>
+            </td>
+          </tr>
+          <AppTableRow v-for="token in tokens" :key="token.id">
+            <AppTableCell>
+              <span class="console-name">
+                <span class="console-name-text">{{ token.name }}</span>
+              </span>
+            </AppTableCell>
+            <AppTableCell class="console-code">{{ token.tokenPrefix }}…</AppTableCell>
+            <AppTableCell class="console-time">{{ formatTime(token.createdAt) }}</AppTableCell>
+            <AppTableCell class="console-time">{{ formatTime(token.lastUsedAt) }}</AppTableCell>
+            <AppTableCell>
+              <div class="console-ops">
+                <button type="button" class="console-op" @click="copyMcpConfig(token)">复制</button>
+                <button type="button" class="console-op is-danger" @click="openRevoke(token)">
+                  撤销
+                </button>
+              </div>
+            </AppTableCell>
+          </AppTableRow>
+        </AppTableBody>
+        <template #footer>
+          <template v-if="loading">加载中…</template>
+          <template v-else>共 {{ tokens.length }} 条</template>
+        </template>
+      </AppTable>
+    </section>
 
     <AppDialog
       v-model:open="createOpen"
@@ -418,5 +326,5 @@ onMounted(refresh)
       @confirm="confirmRevoke"
       @cancel="revokeTarget = null"
     />
-  </div>
+  </ManageShell>
 </template>

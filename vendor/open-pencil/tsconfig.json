@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types"],
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "target": "ES2022",
     "useDefineForClassFields": true,
     "lib": [
@@ -23,7 +27,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "#vite-config/*": ["./vite/*"],
+      "#vite-config/*": [
+        "./vite/*"
+      ],
       "@/*": [
         "./src/*"
       ],
@@ -138,6 +144,12 @@
       ],
       "@open-pencil/pen/*": [
         "./packages/pen/src/*"
+      ],
+      "vue-stream-markdown": [
+        "./shims/removed/vue-stream-markdown.ts"
+      ],
+      "vue-stream-markdown/index.css": [
+        "./shims/removed/vue-stream-markdown.css"
       ]
     }
   },

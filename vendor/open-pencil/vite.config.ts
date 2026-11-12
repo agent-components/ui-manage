@@ -169,16 +169,18 @@ export default defineConfig(async ({ command, mode }) => {
     },
     server: {
       ...createDevServerOptions(host, __dirname),
+      host: true,
+      allowedHosts: ["hpghycxjvirg.sealosgzg.site"],
       ...(uiManageEmbed
         ? {
             strictPort: true,
             proxy: {
               "/api": {
-                target: process.env.UI_MANAGE_API || "http://127.0.0.1:3001",
+                target: "http://127.0.0.1:3001",
                 changeOrigin: true,
               },
               "/mcp": {
-                target: process.env.UI_MANAGE_API || "http://127.0.0.1:3001",
+                target: "http://127.0.0.1:3001",
                 changeOrigin: true,
                 xfwd: true,
               },

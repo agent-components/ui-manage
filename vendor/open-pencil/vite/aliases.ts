@@ -196,11 +196,11 @@ export function createOpenPencilAliases(rootDir: string) {
     },
     {
       find: /^vue-stream-markdown\/index\.css$/,
-      replacement: removed("vue-stream-markdown/index.css"),
+      replacement: removed("vue-stream-markdown.css"),
     },
     {
       find: /^vue-stream-markdown$/,
-      replacement: removed("vue-stream-markdown/index.ts"),
+      replacement: removed("vue-stream-markdown.ts"),
     },
     {
       find: /^@stream-markdown\/code$/,

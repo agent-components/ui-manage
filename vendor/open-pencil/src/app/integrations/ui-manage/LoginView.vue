@@ -8,6 +8,8 @@ import AppInput from '@/components/ui/input/AppInput.vue'
 import AppPasswordInput from '@/components/ui/input/AppPasswordInput.vue'
 
 import { useUiManageAuth } from './auth'
+import { productName } from './brand'
+import ProductMark from './ProductMark.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -39,8 +41,13 @@ async function onSubmit() {
       class="w-full max-w-sm rounded-lg border border-border bg-panel p-6 shadow-sm"
       @submit.prevent="onSubmit"
     >
-      <h1 class="text-base font-semibold text-surface">屏幕设计</h1>
-      <p class="mt-1 text-xs text-muted">登录后管理并编辑设计文件</p>
+      <div class="flex items-center gap-3">
+        <ProductMark class="size-10 shrink-0" />
+        <div>
+          <h1 class="text-base font-semibold text-surface">{{ productName }}</h1>
+          <p class="mt-1 text-xs text-muted">登录后管理并编辑设计文件</p>
+        </div>
+      </div>
 
       <label class="mt-6 block text-xs font-medium text-surface">
         账号

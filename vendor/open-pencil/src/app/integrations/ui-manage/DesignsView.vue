@@ -2,26 +2,22 @@
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { resolvedAppTheme } from '@/app/shell/theme'
-import BrandMark from '@/components/brand/BrandMark.vue'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import { AppConfirmationDialog, AppDialog } from '@/components/ui/dialog'
 import AppAlert from '@/components/ui/feedback/AppAlert.vue'
-import AppPlaceholder from '@/components/ui/feedback/AppPlaceholder.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
 import {
   AppTable,
   AppTableBody,
   AppTableCell,
-  AppTableEmpty,
   AppTableHead,
   AppTableHeader,
   AppTablePlaceholder,
   AppTableRow
 } from '@/components/ui/table'
 
-import AccountMenu from './AccountMenu.vue'
 import { useUiManageDesigns, type Design } from './designs-api'
+import ManageShell from './ManageShell.vue'
 import ShareDialog from './ShareDialog.vue'
 
 const DEFAULT_NAME = '未命名设计文件'
@@ -62,9 +58,12 @@ const filtered = computed(() => {
   return designs.value.filter((d) => d.name.toLowerCase().includes(q))
 })
 
-const showTable = computed(
-  () => loading.value || (designs.value.length > 0 && filtered.value.length > 0)
-)
+const tableUi = {
+  root: 'console-table flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent',
+  scroller: 'console-scroll min-h-0 flex-1 overflow-auto',
+  table: 'console-grid',
+  footer: 'border-0 bg-transparent p-0'
+}
 
 async function refresh() {
   loading.value = true
@@ -161,273 +160,169 @@ async function confirmDelete() {
 function formatTime(value: string) {
   const d = new Date(value)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 onMounted(refresh)
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 bg-canvas text-surface">
-    <aside
-      class="hidden w-[220px] shrink-0 flex-col border-r border-border bg-panel md:flex"
-      aria-label="主导航"
-    >
-      <div class="flex items-center gap-2.5 px-5 py-5">
-        <BrandMark
-          variant="app-icon"
-          :appearance="resolvedAppTheme"
-          class="size-8 shrink-0"
-          decorative
-        />
-        <div class="min-w-0 leading-tight">
-          <p class="truncate text-[15px] font-semibold tracking-tight text-surface">屏幕设计</p>
-          <p class="mt-0.5 truncate text-[11px] text-muted">设计文件管理</p>
-        </div>
-      </div>
-
-      <nav class="flex-1 space-y-1 px-3 pt-1">
-        <div
-          class="relative flex items-center gap-2.5 rounded-md bg-accent/10 py-2.5 pr-3 pl-3 text-[13px] font-medium text-primary"
-          aria-current="page"
-        >
-          <span
-            class="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-r-full bg-primary"
-            aria-hidden="true"
-          />
-          <icon-lucide-layout-template class="size-4 shrink-0 opacity-90" />
-          设计文件
-        </div>
-        <RouterLink
-          to="/tokens"
-          class="flex items-center gap-2.5 rounded-md py-2.5 pr-3 pl-3 text-[13px] font-medium text-muted outline-none transition-colors hover:bg-hover hover:text-surface"
-        >
-          <icon-lucide-key-round class="size-4 shrink-0 opacity-90" />
-          访问令牌
-        </RouterLink>
-      </nav>
-
-      <div class="mt-auto border-t border-border px-3 py-3">
-        <AccountMenu placement="sidebar" />
-      </div>
-    </aside>
-
-    <div class="flex min-w-0 flex-1 flex-col overflow-auto">
-      <header
-        class="flex items-center justify-between gap-3 border-b border-border bg-panel px-4 py-3 md:hidden"
+  <ManageShell active="designs" title="设计文件">
+    <template #actions>
+      <AppButton
+        class="console-btn"
+        color="primary"
+        variant="solid"
+        size="md"
+        :disabled="creating"
+        @click="openCreate"
       >
-        <div class="flex min-w-0 items-center gap-2">
-          <BrandMark
-            variant="app-icon"
-            :appearance="resolvedAppTheme"
-            class="size-7 shrink-0"
-            decorative
-          />
-          <span class="truncate text-[15px] font-semibold">屏幕设计</span>
-        </div>
-        <AccountMenu placement="header" />
-      </header>
+        <template #leading>
+          <icon-lucide-plus class="size-3.5" />
+        </template>
+        新建设计文件
+      </AppButton>
+    </template>
 
-      <main class="flex w-full flex-1 flex-col gap-4 px-5 py-5 sm:px-6 lg:px-8">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div class="min-w-0">
-            <span
-              class="inline-flex h-5 items-center rounded px-1.5 text-[11px] font-medium text-primary"
-              style="background: color-mix(in srgb, var(--color-accent) 14%, transparent)"
-            >
-              设计文件
-            </span>
-            <h1 class="mt-2 text-[22px] leading-none font-semibold tracking-tight text-surface">
-              设计文件
-            </h1>
-          </div>
-          <AppButton
-            color="primary"
-            variant="solid"
+    <AppAlert v-if="error" tone="error" :heading="error" />
+
+    <section class="console-card">
+      <form class="console-filter" @submit.prevent="applySearch">
+        <label class="console-field-label">
+          <span>关键词</span>
+          <AppInput
+            v-model="draftQuery"
+            class="console-field w-full"
             size="md"
-            :disabled="creating"
-            @click="openCreate"
+            placeholder="按名称搜索"
+            aria-label="按名称搜索"
+          />
+        </label>
+        <div class="console-filter-actions">
+          <AppButton class="console-btn" color="primary" variant="solid" size="md" type="submit">
+            搜索
+          </AppButton>
+          <AppButton
+            class="console-btn console-btn-plain"
+            color="neutral"
+            variant="outline"
+            size="md"
+            type="button"
+            @click="resetSearch"
           >
-            <template #leading>
-              <icon-lucide-plus class="size-3.5" />
-            </template>
-            新建设计文件
+            重置
           </AppButton>
         </div>
+      </form>
+    </section>
 
-        <AppAlert v-if="error" tone="error" :heading="error" />
-
-        <section class="rounded-xl border border-border bg-panel px-5 py-4 shadow-sm">
-          <form
-            class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end"
-            @submit.prevent="applySearch"
-          >
-            <label class="block w-full min-w-0 sm:max-w-[280px]">
-              <span class="mb-1.5 block text-[12px] text-muted">关键词</span>
-              <AppInput
-                v-model="draftQuery"
-                class="w-full"
-                size="md"
-                placeholder="按名称搜索"
-                aria-label="按名称搜索"
-              />
-            </label>
-            <div class="flex gap-2 pb-px">
-              <AppButton color="primary" variant="solid" size="md" type="submit">
-                <template #leading>
-                  <icon-lucide-search class="size-3.5" />
-                </template>
-                搜索
-              </AppButton>
-              <AppButton
-                color="neutral"
-                variant="outline"
-                size="md"
-                type="button"
-                @click="resetSearch"
-              >
-                重置
-              </AppButton>
-            </div>
-          </form>
-        </section>
-
-        <section
-          class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm"
-        >
-          <AppPlaceholder
-            v-if="!loading && !error && !designs.length"
-            label="还没有设计文件"
-            description="点击右上角「新建设计文件」开始。"
-            size="panel"
-            class="min-h-[320px]"
-          >
-            <template #icon>
-              <icon-lucide-layout-template class="size-5" />
-            </template>
-            <template #action>
-              <AppButton color="primary" variant="solid" size="sm" @click="openCreate">
-                新建设计文件
-              </AppButton>
-            </template>
-          </AppPlaceholder>
-
-          <AppPlaceholder
-            v-else-if="!loading && designs.length && !filtered.length"
-            label="没有匹配的文件"
-            description="调整关键词后重新搜索。"
-            size="panel"
-            class="min-h-[280px]"
-          >
-            <template #action>
-              <AppButton color="neutral" variant="outline" size="sm" @click="resetSearch">
-                重置
-              </AppButton>
-            </template>
-          </AppPlaceholder>
-
-          <AppTable
-            v-else-if="showTable"
-            label="设计文件列表"
-            :loading="loading ? 'first' : false"
-            loading-label="加载中…"
-            :ui="{
-              root: 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent',
-              scroller: 'min-h-0 flex-1 overflow-auto',
-              footer: 'mt-auto border-t border-border px-5 py-2.5'
-            }"
-          >
-            <AppTableHeader>
-              <AppTableRow>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">名称</AppTableHead>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">
-                  更新时间
-                </AppTableHead>
-                <AppTableHead class="h-10 px-4 text-[12px] first:pl-5 last:pr-5">
-                  创建时间
-                </AppTableHead>
-                <AppTableHead class="h-10 w-56 px-4 text-[12px] first:pl-5 last:pr-5">
-                  操作
-                </AppTableHead>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTablePlaceholder
-              v-if="loading"
-              :columns="[
-                { id: 'name' },
-                { id: 'updated' },
-                { id: 'created' },
-                { id: 'actions', actions: true }
-              ]"
-            />
-            <AppTableBody v-else>
-              <AppTableEmpty v-if="!filtered.length" :colspan="4">暂无设计文件</AppTableEmpty>
-              <AppTableRow v-for="design in filtered" :key="design.id">
-                <AppTableCell class="h-14 px-4 text-[13px] first:pl-5 last:pr-5">
-                  <RouterLink
-                    :to="`/designs/${design.id}`"
-                    class="font-medium text-surface hover:text-primary"
-                  >
-                    {{ design.name }}
-                  </RouterLink>
-                </AppTableCell>
-                <AppTableCell
-                  class="h-14 px-4 text-[13px] tabular-nums text-muted first:pl-5 last:pr-5"
+    <section class="console-card console-card-fill">
+      <AppTable
+        label="设计文件列表"
+        :loading="loading ? 'first' : false"
+        loading-label="加载中…"
+        :ui="tableUi"
+      >
+        <AppTableHeader>
+          <AppTableRow>
+            <AppTableHead class="console-col-name">名称</AppTableHead>
+            <AppTableHead class="console-col-time">更新时间</AppTableHead>
+            <AppTableHead class="console-col-time">创建时间</AppTableHead>
+            <AppTableHead class="console-col-ops">操作</AppTableHead>
+          </AppTableRow>
+        </AppTableHeader>
+        <AppTablePlaceholder
+          v-if="loading"
+          :columns="[
+            { id: 'name' },
+            { id: 'updated' },
+            { id: 'created' },
+            { id: 'actions', actions: true }
+          ]"
+        />
+        <AppTableBody v-else>
+          <tr v-if="!filtered.length" class="console-empty-row">
+            <td class="console-empty-cell" colspan="4">
+              <div class="console-empty">
+                <svg
+                  class="console-empty-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="none"
+                  aria-hidden="true"
                 >
-                  {{ formatTime(design.updatedAt) }}
-                </AppTableCell>
-                <AppTableCell
-                  class="h-14 px-4 text-[13px] tabular-nums text-muted first:pl-5 last:pr-5"
-                >
-                  {{ formatTime(design.createdAt) }}
-                </AppTableCell>
-                <AppTableCell class="h-14 px-4 text-[13px] first:pl-5 last:pr-5">
-                  <div class="flex items-center gap-3">
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-primary hover:underline"
-                      @click="router.push(`/designs/${design.id}`)"
-                    >
-                      编辑
-                    </button>
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-muted hover:text-surface"
-                      @click="openRename(design)"
-                    >
-                      重命名
-                    </button>
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-muted hover:text-surface"
-                      @click="openShare(design)"
-                    >
-                      分享
-                    </button>
-                    <button
-                      type="button"
-                      class="cursor-pointer text-[13px] text-error hover:underline"
-                      @click="openDelete(design)"
-                    >
-                      删除
-                    </button>
-                  </div>
-                </AppTableCell>
-              </AppTableRow>
-            </AppTableBody>
-            <template #footer>
-              <div class="flex items-center justify-end text-[12px] text-muted">
-                <template v-if="loading">加载中…</template>
-                <template v-else-if="query.trim()">
-                  找到 {{ filtered.length }} 条，共 {{ designs.length }} 条
+                  <path
+                    d="M12 8.5h10.4L30 16.1V31a1.5 1.5 0 0 1-1.5 1.5h-16.5A1.5 1.5 0 0 1 10.5 31V10A1.5 1.5 0 0 1 12 8.5Z"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                  />
+                  <path d="M22.2 8.8V16H29.6" stroke="currentColor" stroke-width="1.4" />
+                  <path
+                    d="M16 23.5h10M16 27.5h6.5"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <template v-if="designs.length">
+                  <p class="console-empty-title">没有匹配的文件</p>
+                  <p class="console-empty-desc">调整关键词后重新搜索。</p>
+                  <button type="button" class="console-empty-action is-plain" @click="resetSearch">
+                    重置
+                  </button>
                 </template>
-                <template v-else>共 {{ designs.length }} 条</template>
+                <template v-else>
+                  <p class="console-empty-title">还没有设计文件</p>
+                  <p class="console-empty-desc">点击右上角「新建设计文件」开始。</p>
+                  <button type="button" class="console-empty-action" @click="openCreate">
+                    新建设计文件
+                  </button>
+                </template>
               </div>
-            </template>
-          </AppTable>
-        </section>
-      </main>
-    </div>
+            </td>
+          </tr>
+          <AppTableRow v-for="design in filtered" :key="design.id">
+            <AppTableCell>
+              <RouterLink :to="`/designs/${design.id}`" class="console-name">
+                <span class="console-glyph">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 1.75h5.1L11.5 5.1V12.25H3V1.75Z"
+                      stroke="currentColor"
+                      stroke-width="1.15"
+                    />
+                    <path d="M8 1.85V5.1h3.35" stroke="currentColor" stroke-width="1.15" />
+                  </svg>
+                </span>
+                <span class="console-name-text">{{ design.name }}</span>
+              </RouterLink>
+            </AppTableCell>
+            <AppTableCell class="console-time">{{ formatTime(design.updatedAt) }}</AppTableCell>
+            <AppTableCell class="console-time">{{ formatTime(design.createdAt) }}</AppTableCell>
+            <AppTableCell>
+              <div class="console-ops">
+                <button type="button" class="console-op" @click="router.push(`/designs/${design.id}`)">
+                  编辑
+                </button>
+                <button type="button" class="console-op" @click="openRename(design)">重命名</button>
+                <button type="button" class="console-op" @click="openShare(design)">分享</button>
+                <button type="button" class="console-op is-danger" @click="openDelete(design)">
+                  删除
+                </button>
+              </div>
+            </AppTableCell>
+          </AppTableRow>
+        </AppTableBody>
+        <template #footer>
+          <template v-if="loading">加载中…</template>
+          <template v-else-if="query.trim()">
+            找到 {{ filtered.length }} 条，共 {{ designs.length }} 条
+          </template>
+          <template v-else>共 {{ designs.length }} 条</template>
+        </template>
+      </AppTable>
+    </section>
 
     <AppDialog
       v-model:open="createOpen"
@@ -506,5 +401,5 @@ onMounted(refresh)
     />
 
     <ShareDialog v-model:open="shareOpen" :design-id="shareDesignId" />
-  </div>
+  </ManageShell>
 </template>

@@ -9,6 +9,8 @@ import { provideEditor } from '@open-pencil/vue'
 import { useI18n } from '@open-pencil/vue/i18n'
 
 import { useDocumentCloseProtection } from '@/app/document/close/use'
+import { productName } from '@/app/integrations/ui-manage/brand'
+import { isUiManageEmbed } from '@/app/integrations/ui-manage/mode'
 import { endRecoverySession, startRecoverySession } from '@/app/document/recovery/session'
 import { useFollowingEditorStore } from '@/app/editor/active-store'
 import { interfaceScalePreference } from '@/app/shell/interface-scale'
@@ -27,7 +29,10 @@ import AppToaster from '@/components/shell/AppToaster.vue'
 const { locale } = useI18n()
 
 useHead({
-  titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil'),
+  titleTemplate: (title) => {
+    const product = isUiManageEmbed ? productName : 'OpenPencil'
+    return title ? `${title} — ${product}` : product
+  },
   htmlAttrs: {
     lang: locale,
     'data-interface-scale': interfaceScalePreference,
