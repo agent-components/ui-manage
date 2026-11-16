@@ -1,11 +1,8 @@
 /**
- * Share uses the same canvas as editor preview. Preview can draw Chinese because the
- * requested face is loaded and text is shaped live. A share viewer often has no PingFang,
- * and the file's saved outlines for those characters are the font's missing-glyph box.
- * Load the CJK fallback the preview would shape with, then drop those boxes so the
- * canvas paints the live paragraph instead.
+ * Share uses the same canvas and the same font preparation as the editor.
+ * Saved missing-glyph boxes would paint over that live text, so drop only those boxes.
+ * Do not load another fallback here: a second face makes the share page look unlike the editor.
  */
-import { fontManager } from "@open-pencil/core/text";
 import type { SceneGraph, SceneNode } from "@open-pencil/scene-graph";
 import {
   GeometryCommand,
@@ -76,40 +73,13 @@ function usesMissingGlyphOutlines(node: SceneNode): boolean {
   );
 }
 
-function hanCharacters(graph: SceneGraph, rootIds: readonly string[]): string {
-  const characters = new Set<string>();
-  const walk = (id: string) => {
-    const node = graph.getNode(id);
-    if (!node) return;
-    if (node.type === "TEXT" && node.text) {
-      for (const character of node.text) {
-        if (/\p{Script=Han}/u.test(character)) characters.add(character);
-      }
-    }
-    for (const childId of node.childIds) walk(childId);
-  };
-  for (const id of rootIds) walk(id);
-  return Array.from(characters).join("");
-}
-
-/**
- * The page switch already loads the faces the editor preview loads. Saved
- * missing-glyph boxes would still paint over a fallback, so drop them and make
- * sure the CJK fallback is in the same shaper the preview uses.
- */
-export async function settleSharePageText(store: ShareCanvas): Promise<void> {
+/** Page fonts are already prepared the same way as the editor. Drop baked missing-glyph boxes only. */
+export function settleSharePageText(store: ShareCanvas): void {
   const rootIds = store.graph
     .getChildren(store.state.currentPageId)
     .map((node) => node.id);
   if (rootIds.length === 0) return;
-  const dropped = dropMissingGlyphOutlines(store.graph, rootIds);
-  if (dropped) {
-    store.renderer?.invalidateAllPictures();
-    store.requestRender();
-  }
-  const characters = hanCharacters(store.graph, rootIds);
-  if (!characters) return;
-  await fontManager.ensureFallbackPack(["cjk-sc"], characters);
+  if (!dropMissingGlyphOutlines(store.graph, rootIds)) return;
   store.renderer?.invalidateAllPictures();
   store.requestRender();
 }

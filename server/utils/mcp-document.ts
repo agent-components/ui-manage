@@ -2,6 +2,7 @@ import { FigmaAPI } from "@open-pencil/core/figma-api";
 import { exportFigFile, parseFigFile } from "@open-pencil/core/io/formats/fig";
 import { SceneGraph } from "@open-pencil/scene-graph";
 import type { McpDesign } from "./mcp-design";
+import { acceptRequestedFont } from "./mcp-fonts";
 import { getDesignObject, putDesignObject } from "./s3";
 import { prisma } from "./prisma";
 
@@ -70,8 +71,10 @@ async function loadGraph(design: McpDesign): Promise<SceneGraph> {
 
 function createFigma(graph: SceneGraph): FigmaAPI {
   const figma = new FigmaAPI(graph);
-  // 改字和导出会先 markLoaded。这里挡住后续 loadFontAsync，避免再去拉远程字体。
-  figma.loadFontAsync = async () => {};
+  // 字体缺失只在服务器里接住，不把字体错误返回给 AI。
+  figma.loadFontAsync = async (fontName) => {
+    await acceptRequestedFont(fontName);
+  };
   return figma;
 }
 

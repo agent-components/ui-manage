@@ -164,9 +164,7 @@ async function applyShareDocument(
   await restoreSharePageFromHash(tab.store).catch((error) => {
     console.error("[ui-manage share] restore page from hash", error);
   });
-  await settleSharePageText(tab.store).catch((error) => {
-    console.error("[ui-manage share] settle text", error);
-  });
+  settleSharePageText(tab.store);
 }
 
 function stopSharePolling(): void {
