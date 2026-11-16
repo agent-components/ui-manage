@@ -5,9 +5,12 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { FigmaAPI } from "@open-pencil/core/figma-api";
+import type { ToolDef } from "@open-pencil/core/tools";
 import type { AuthUser } from "./auth";
 import type { McpDesign } from "./mcp-design";
 import { withMcpDocument } from "./mcp-document";
+import { ensureMcpFonts } from "./mcp-fonts";
 import {
   exportPngToolResponse,
   isExportPngTool,
@@ -30,6 +33,52 @@ const PLACES_ON_PAGE = new Set([
   "render",
   "create_instance",
 ]);
+
+function declaredFonts(
+  tool: ToolDef
+):
+  | ((figma: FigmaAPI, args: Record<string, unknown>) => unknown)
+  | null {
+  const fonts = (tool as { fonts?: unknown }).fonts;
+  return typeof fonts === "function"
+    ? (fonts as (figma: FigmaAPI, args: Record<string, unknown>) => unknown)
+    : null;
+}
+
+/** render / import_svg 在执行里排文字，工具定义上没有 fonts。 */
+function payloadHasText(toolName: string, args: Record<string, unknown>): boolean {
+  if (toolName === "render" && typeof args.jsx === "string") {
+    return /<\s*(Text|Span|Paragraph|text-span|text-paragraph|text)\b/.test(
+      args.jsx
+    );
+  }
+  if (toolName === "import_svg" && typeof args.svg === "string") {
+    return /<\s*text\b/i.test(args.svg);
+  }
+  return false;
+}
+
+async function ensureFontsForTool(
+  tool: ToolDef,
+  figma: FigmaAPI,
+  args: Record<string, unknown>
+): Promise<void> {
+  if (payloadHasText(tool.name, args)) {
+    await ensureMcpFonts();
+    return;
+  }
+  const fonts = declaredFonts(tool);
+  if (!fonts) return;
+  let requested: unknown;
+  try {
+    requested = fonts(figma, args);
+  } catch {
+    return;
+  }
+  if (Array.isArray(requested) && requested.length > 0) {
+    await ensureMcpFonts();
+  }
+}
 
 function createdPageId(result: unknown): string | null {
   if (!result || typeof result !== "object" || !("id" in result)) return null;
@@ -90,9 +139,10 @@ function createServer(): McpServer {
       const { design } = requireContext();
       const args = (request.params.arguments ?? {}) as Record<string, unknown>;
       try {
-        const result = await withMcpDocument(design, false, (figma) =>
-          runExportPng(figma, args)
-        );
+        const result = await withMcpDocument(design, false, async (figma) => {
+          await ensureMcpFonts();
+          return runExportPng(figma, args);
+        });
         return exportPngToolResponse(result);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -124,6 +174,7 @@ function createServer(): McpServer {
         design,
         toolMutates(tool),
         async (figma) => {
+          await ensureFontsForTool(tool, figma, args);
           if (
             PLACES_ON_PAGE.has(tool.name) &&
             figma.graph.getPages().length === 0

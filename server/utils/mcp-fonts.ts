@@ -1,37 +1,36 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
 import { fontManager } from "@open-pencil/core/text";
 
-let ready: Promise<void> | null = null;
+const require = createRequire(import.meta.url);
 
-function coreAssetsDir(): string {
-  const require = createRequire(import.meta.url);
-  return join(
-    dirname(require.resolve("@open-pencil/core/package.json")),
-    "assets"
-  );
-}
+const INTER_VARIABLE = "@open-pencil/core/assets/InterVariable.ttf";
+const INTER_SEMIBOLD = "@open-pencil/core/assets/Inter-SemiBold.ttf";
 
-function bufferOf(file: string): ArrayBuffer {
-  const bytes = readFileSync(join(coreAssetsDir(), file));
+function bufferOf(specifier: string): ArrayBuffer {
+  const bytes = readFileSync(require.resolve(specifier));
   return bytes.buffer.slice(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength
   );
 }
 
-/** 预载 Inter，避免 MCP 改文字时去拉 Google Fonts。 */
+let ready: Promise<void> | null = null;
+
+/** 改字和导出 PNG 前预载 Inter，避免排版时去拉 Google Fonts。只读工具不调用。 */
 export function ensureMcpFonts(): Promise<void> {
   if (!ready) {
     ready = (async () => {
-      const variable = bufferOf("InterVariable.ttf");
-      const semiBold = bufferOf("Inter-SemiBold.ttf");
+      const variable = bufferOf(INTER_VARIABLE);
+      const semiBold = bufferOf(INTER_SEMIBOLD);
       await fontManager.markLoaded("Inter", "Regular", variable, "bundled");
       await fontManager.markLoaded("Inter", "Medium", variable, "bundled");
       await fontManager.markLoaded("Inter", "Bold", variable, "bundled");
       await fontManager.markLoaded("Inter", "Semi Bold", semiBold, "bundled");
-    })();
+    })().catch((error: unknown) => {
+      ready = null;
+      throw error;
+    });
   }
   return ready;
 }

@@ -100,6 +100,18 @@ if [[ ! -d .output/server/node_modules/@open-pencil/yoga-layout ]]; then
 fi
 ln -sfn @open-pencil/yoga-layout .output/server/node_modules/yoga-layout
 
+for runtime_file in \
+  .output/server/node_modules/@open-pencil/core/assets/InterVariable.ttf \
+  .output/server/node_modules/@open-pencil/core/assets/Inter-SemiBold.ttf \
+  .output/server/node_modules/canvaskit-wasm/bin/full/canvaskit.wasm \
+  .output/server/node_modules/harfbuzzjs/dist/harfbuzz-subset.wasm
+do
+  if [[ ! -f "$runtime_file" ]]; then
+    echo "产物缺少运行时文件：$runtime_file" >&2
+    exit 1
+  fi
+done
+
 echo "==> 组装发布目录"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"

@@ -2,7 +2,6 @@ import { FigmaAPI } from "@open-pencil/core/figma-api";
 import { exportFigFile, parseFigFile } from "@open-pencil/core/io/formats/fig";
 import { SceneGraph } from "@open-pencil/scene-graph";
 import type { McpDesign } from "./mcp-design";
-import { ensureMcpFonts } from "./mcp-fonts";
 import { getDesignObject, putDesignObject } from "./s3";
 import { prisma } from "./prisma";
 
@@ -71,7 +70,7 @@ async function loadGraph(design: McpDesign): Promise<SceneGraph> {
 
 function createFigma(graph: SceneGraph): FigmaAPI {
   const figma = new FigmaAPI(graph);
-  // 字体已在 ensureMcpFonts 中 markLoaded；阻止再去拉远程字体。
+  // 改字和导出会先 markLoaded。这里挡住后续 loadFontAsync，避免再去拉远程字体。
   figma.loadFontAsync = async () => {};
   return figma;
 }
@@ -116,7 +115,6 @@ export async function withMcpDocument<T>(
   mutates: boolean,
   run: (figma: FigmaAPI) => Promise<T> | T
 ): Promise<T> {
-  await ensureMcpFonts();
   return withDesignLock(design.id, async () => {
     const session = await getSession(design);
     const result = await run(session.figma);
