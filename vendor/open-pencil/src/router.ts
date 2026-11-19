@@ -18,6 +18,26 @@ function stripHarnessSsoFromUrl() {
   window.history.replaceState(window.history.state, "", next);
 }
 
+const EMBED_GATE_MESSAGE_KEY = "ui_manage_embed_gate_message";
+
+export function takeEmbedGateMessage(): string {
+  try {
+    const message = sessionStorage.getItem(EMBED_GATE_MESSAGE_KEY) || "";
+    sessionStorage.removeItem(EMBED_GATE_MESSAGE_KEY);
+    return message;
+  } catch {
+    return "";
+  }
+}
+
+function setEmbedGateMessage(message: string) {
+  try {
+    sessionStorage.setItem(EMBED_GATE_MESSAGE_KEY, message);
+  } catch {
+    /* ignore */
+  }
+}
+
 async function ensureEmbedSso(): Promise<boolean> {
   if (!isEmbeddedFrame()) return true;
   if (!embedSsoPromise) {
@@ -32,9 +52,14 @@ async function ensureEmbedSso(): Promise<boolean> {
           await auth.exchangeSso(code);
           stripHarnessSsoFromUrl();
           return true;
-        } catch {
+        } catch (error) {
           stripHarnessSsoFromUrl();
           auth.clear();
+          setEmbedGateMessage(
+            error instanceof Error && error.message
+              ? error.message
+              : "请从 Harness Admin 打开"
+          );
           return false;
         }
       }

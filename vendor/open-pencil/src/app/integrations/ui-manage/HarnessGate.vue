@@ -1,10 +1,21 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
+import { takeEmbedGateMessage } from '@/router'
+
 import { productName } from './brand'
 import ProductMark from './ProductMark.vue'
 
-defineProps<{
+const props = defineProps<{
   message?: string
 }>()
+
+const message = ref(props.message || '请从 Harness Admin 打开')
+
+onMounted(() => {
+  const detail = takeEmbedGateMessage()
+  if (detail) message.value = detail
+})
 </script>
 
 <template>
@@ -14,7 +25,7 @@ defineProps<{
         <ProductMark class="size-10 shrink-0" />
         <div>
           <h1 class="text-base font-semibold text-surface">{{ productName }}</h1>
-          <p class="mt-1 text-xs text-muted">{{ message || '请从 Harness Admin 打开' }}</p>
+          <p class="mt-1 text-xs text-muted">{{ message }}</p>
         </div>
       </div>
     </div>
