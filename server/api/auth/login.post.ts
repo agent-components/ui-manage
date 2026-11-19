@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       displayName: user.displayName,
       email: user.email,
       phone: user.phone,
-      aboutMe: user.aboutMe,
+      role: user.role,
     },
   };
 });

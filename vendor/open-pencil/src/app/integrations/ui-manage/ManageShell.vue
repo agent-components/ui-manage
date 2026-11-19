@@ -7,7 +7,7 @@ import ProductMark from './ProductMark.vue'
 import './console.css'
 
 defineProps<{
-  active: 'designs' | 'tokens'
+  active: 'designs'
   title: string
   description?: string
 }>()
@@ -33,15 +33,6 @@ defineProps<{
         >
           <icon-lucide-layout-template class="console-nav-icon" />
           设计文件
-        </RouterLink>
-        <RouterLink
-          to="/tokens"
-          class="console-nav-item"
-          :class="{ 'is-active': active === 'tokens' }"
-          :aria-current="active === 'tokens' ? 'page' : undefined"
-        >
-          <icon-lucide-key-round class="console-nav-icon" />
-          访问令牌
         </RouterLink>
       </nav>
 

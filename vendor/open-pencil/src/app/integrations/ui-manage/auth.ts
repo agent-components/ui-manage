@@ -1,19 +1,20 @@
 import { ref } from "vue";
 
+import { isEmbeddedFrame } from "./mode";
+
 export type AuthUser = {
   id: string;
   account: string;
   displayName: string;
   email?: string | null;
   phone?: string | null;
-  aboutMe?: string | null;
+  role?: string | null;
 };
 
 export type ProfileUpdate = {
   displayName: string;
   email?: string | null;
   phone?: string | null;
-  aboutMe?: string | null;
   currentPassword?: string;
   newPassword?: string;
 };
@@ -26,6 +27,10 @@ const user = ref<AuthUser | null>(null);
 const ready = ref(false);
 /** Avoid hitting /api/auth/me on every navigation once the session is known good. */
 let sessionOk = false;
+
+function storage(): Storage {
+  return isEmbeddedFrame() ? sessionStorage : localStorage;
+}
 
 async function readJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -46,8 +51,9 @@ async function readJson<T>(res: Response): Promise<T> {
 
 export function useUiManageAuth() {
   function loadFromStorage() {
-    token.value = localStorage.getItem(TOKEN_KEY);
-    const raw = localStorage.getItem(USER_KEY);
+    const store = storage();
+    token.value = store.getItem(TOKEN_KEY);
+    const raw = store.getItem(USER_KEY);
     if (raw) {
       try {
         user.value = JSON.parse(raw) as AuthUser;
@@ -59,25 +65,28 @@ export function useUiManageAuth() {
   }
 
   function persist(nextToken: string, nextUser: AuthUser) {
+    const store = storage();
     token.value = nextToken;
     user.value = nextUser;
     sessionOk = true;
-    localStorage.setItem(TOKEN_KEY, nextToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    store.setItem(TOKEN_KEY, nextToken);
+    store.setItem(USER_KEY, JSON.stringify(nextUser));
   }
 
   function applyUser(nextUser: AuthUser) {
+    const store = storage();
     user.value = nextUser;
     sessionOk = true;
-    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    store.setItem(USER_KEY, JSON.stringify(nextUser));
   }
 
   function clear() {
+    const store = storage();
     token.value = null;
     user.value = null;
     sessionOk = false;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    store.removeItem(TOKEN_KEY);
+    store.removeItem(USER_KEY);
   }
 
   function authHeaders(): HeadersInit {
@@ -98,7 +107,7 @@ export function useUiManageAuth() {
       }
       const me = await readJson<AuthUser>(res);
       user.value = me;
-      localStorage.setItem(USER_KEY, JSON.stringify(me));
+      storage().setItem(USER_KEY, JSON.stringify(me));
       sessionOk = true;
       return true;
     } catch {
@@ -112,6 +121,17 @@ export function useUiManageAuth() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ account, password }),
+    });
+    const result = await readJson<{ token: string; user: AuthUser }>(res);
+    persist(result.token, result.user);
+    return result;
+  }
+
+  async function exchangeSso(code: string) {
+    const res = await fetch("/api/auth/sso", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
     });
     const result = await readJson<{ token: string; user: AuthUser }>(res);
     persist(result.token, result.user);
@@ -162,6 +182,7 @@ export function useUiManageAuth() {
     refreshUser,
     updateProfile,
     login,
+    exchangeSso,
     logout,
   };
 }
@@ -169,7 +190,7 @@ export function useUiManageAuth() {
 /** Logged-in account label. Empty when nobody is signed in. */
 export function currentUserName(): string {
   const auth = useUiManageAuth();
-  if (!auth.ready.value && typeof localStorage !== "undefined") {
+  if (!auth.ready.value && typeof window !== "undefined") {
     auth.loadFromStorage();
   }
   return (

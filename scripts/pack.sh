@@ -45,6 +45,12 @@ if [[ ! -f vendor/open-pencil/dist/canvaskit.wasm ]]; then
   exit 1
 fi
 
+# Vite publicDir 有时未带上 brand；页面会请求 /brand/app-icon.svg
+if [[ ! -f vendor/open-pencil/dist/brand/app-icon.svg && -f vendor/open-pencil/assets/brand/app-icon.svg ]]; then
+  mkdir -p vendor/open-pencil/dist/brand
+  cp -a vendor/open-pencil/assets/brand/. vendor/open-pencil/dist/brand/
+fi
+
 echo "==> 构建后端"
 NITRO_PUBLIC_DIST=1 pnpm exec nitro build
 
@@ -88,14 +94,13 @@ if [[ "$ENGINE_COUNT" -lt 1 ]]; then
 fi
 
 if [[ ! -d .output/server/node_modules/@open-pencil/core ]]; then
-  echo "产物里没有 @open-pencil/core，MCP 运行时会缺依赖" >&2
+  echo "产物里没有 @open-pencil/core，OpenAPI 画稿运行时会缺依赖" >&2
   exit 1
 fi
 
 # core 以 npm 别名引用 yoga-layout，Nitro 只按真实包名 @open-pencil/yoga-layout 放进产物。
-# 没有这个同名链接时，加载 /mcp 会在 import 阶段抛错，对外就是 HTTP 500。
 if [[ ! -d .output/server/node_modules/@open-pencil/yoga-layout ]]; then
-  echo "产物里没有 @open-pencil/yoga-layout，MCP 排版会缺依赖" >&2
+  echo "产物里没有 @open-pencil/yoga-layout，画稿排版会缺依赖" >&2
   exit 1
 fi
 ln -sfn @open-pencil/yoga-layout .output/server/node_modules/yoga-layout
@@ -133,4 +138,4 @@ echo "部署机上："
 echo "  tar -xzf $(basename "$ARCHIVE")"
 echo "  cd ui-manage"
 echo "  cp .env.example .env   # 填 DATABASE_URL 和 S3_*"
-echo "  node start.mjs         # 默认 0.0.0.0:3000，页面和 /api、/mcp 同源"
+echo "  node start.mjs         # 默认 0.0.0.0:3000，页面和 /api 同源"

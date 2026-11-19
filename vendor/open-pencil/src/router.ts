@@ -1,10 +1,49 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import { useUiManageAuth } from "@/app/integrations/ui-manage/auth";
+import { isEmbeddedFrame } from "@/app/integrations/ui-manage/mode";
 
 import DesignView from "./views/DesignView.vue";
 
 const uiManageEmbed = import.meta.env.VITE_OPENPENCIL_UI_MANAGE === "1";
+
+let embedSsoPromise: Promise<boolean> | null = null;
+
+function stripHarnessSsoFromUrl() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("harness_sso")) return;
+  url.searchParams.delete("harness_sso");
+  const search = url.searchParams.toString();
+  const next = `${url.pathname}${search ? `?${search}` : ""}${url.hash}`;
+  window.history.replaceState(window.history.state, "", next);
+}
+
+async function ensureEmbedSso(): Promise<boolean> {
+  if (!isEmbeddedFrame()) return true;
+  if (!embedSsoPromise) {
+    embedSsoPromise = (async () => {
+      const auth = useUiManageAuth();
+      if (!auth.ready.value) auth.loadFromStorage();
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("harness_sso")?.trim() ?? "";
+      if (code) {
+        try {
+          await auth.exchangeSso(code);
+          stripHarnessSsoFromUrl();
+          return true;
+        } catch {
+          stripHarnessSsoFromUrl();
+          auth.clear();
+          return false;
+        }
+      }
+
+      return auth.ensureSession();
+    })();
+  }
+  return embedSsoPromise;
+}
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,17 +56,17 @@ const router = createRouter({
           meta: { public: true },
         },
         {
+          path: "/harness-required",
+          name: "ui-manage-harness-required",
+          component: () =>
+            import("@/app/integrations/ui-manage/HarnessGate.vue"),
+          meta: { public: true, embedGate: true },
+        },
+        {
           path: "/designs",
           name: "ui-manage-designs",
           component: () =>
             import("@/app/integrations/ui-manage/DesignsView.vue"),
-          meta: { auth: true },
-        },
-        {
-          path: "/tokens",
-          name: "ui-manage-tokens",
-          component: () =>
-            import("@/app/integrations/ui-manage/TokensView.vue"),
           meta: { auth: true },
         },
         {
@@ -54,9 +93,28 @@ if (uiManageEmbed) {
     const auth = useUiManageAuth();
     if (!auth.ready.value) auth.loadFromStorage();
 
+    const embedded = isEmbeddedFrame();
+
+    if (embedded) {
+      if (to.meta.share || to.name === "ui-manage-harness-required") {
+        return true;
+      }
+      if (to.path === "/login") {
+        return { path: "/harness-required" };
+      }
+      const ok = await ensureEmbedSso();
+      if (!ok) {
+        return { name: "ui-manage-harness-required" };
+      }
+      return true;
+    }
+
     // Share preview is public + read-only; create/edit always need a live session.
     if (to.meta.public) {
       if (to.path === "/login" && (await auth.ensureSession())) {
+        return { path: "/designs" };
+      }
+      if (to.name === "ui-manage-harness-required") {
         return { path: "/designs" };
       }
       return true;

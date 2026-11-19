@@ -18,7 +18,11 @@ import {
 
 import { useUiManageDesigns, type Design } from './designs-api'
 import ManageShell from './ManageShell.vue'
+import { isEmbeddedFrame } from './mode'
 import ShareDialog from './ShareDialog.vue'
+import './console.css'
+
+const embedded = isEmbeddedFrame()
 
 const DEFAULT_NAME = '未命名设计文件'
 
@@ -167,7 +171,7 @@ onMounted(refresh)
 </script>
 
 <template>
-  <ManageShell active="designs" title="设计文件">
+  <ManageShell v-if="!embedded" active="designs" title="设计文件">
     <template #actions>
       <AppButton
         class="console-btn"
@@ -402,4 +406,206 @@ onMounted(refresh)
 
     <ShareDialog v-model:open="shareOpen" :design-id="shareDesignId" />
   </ManageShell>
+
+  <div v-else class="console console-embed">
+    <main class="console-page">
+      <div class="console-heading">
+        <div class="min-w-0">
+          <h1 class="console-title">设计文件</h1>
+        </div>
+        <div class="shrink-0">
+          <AppButton
+            class="console-btn"
+            color="primary"
+            variant="solid"
+            size="md"
+            :disabled="creating"
+            @click="openCreate"
+          >
+            <template #leading>
+              <icon-lucide-plus class="size-3.5" />
+            </template>
+            新建设计文件
+          </AppButton>
+        </div>
+      </div>
+
+      <AppAlert v-if="error" tone="error" :heading="error" />
+
+      <section class="console-card">
+        <form class="console-filter" @submit.prevent="applySearch">
+          <label class="console-field-label">
+            <span>关键词</span>
+            <AppInput
+              v-model="draftQuery"
+              class="console-field w-full"
+              size="md"
+              placeholder="按名称搜索"
+              aria-label="按名称搜索"
+            />
+          </label>
+          <div class="console-filter-actions">
+            <AppButton class="console-btn" color="primary" variant="solid" size="md" type="submit">
+              搜索
+            </AppButton>
+            <AppButton
+              class="console-btn console-btn-plain"
+              color="neutral"
+              variant="outline"
+              size="md"
+              type="button"
+              @click="resetSearch"
+            >
+              重置
+            </AppButton>
+          </div>
+        </form>
+      </section>
+
+      <section class="console-card console-card-fill">
+        <AppTable
+          label="设计文件列表"
+          :loading="loading ? 'first' : false"
+          loading-label="加载中…"
+          :ui="tableUi"
+        >
+          <AppTableHeader>
+            <AppTableRow>
+              <AppTableHead class="console-col-name">名称</AppTableHead>
+              <AppTableHead class="console-col-time">更新时间</AppTableHead>
+              <AppTableHead class="console-col-time">创建时间</AppTableHead>
+              <AppTableHead class="console-col-ops">操作</AppTableHead>
+            </AppTableRow>
+          </AppTableHeader>
+          <AppTablePlaceholder
+            v-if="loading"
+            :columns="[
+              { id: 'name' },
+              { id: 'updated' },
+              { id: 'created' },
+              { id: 'actions', actions: true }
+            ]"
+          />
+          <AppTableBody v-else>
+            <tr v-if="!filtered.length" class="console-empty-row">
+              <td class="console-empty-cell" colspan="4">
+                <div class="console-empty">
+                  <p class="console-empty-title">
+                    {{ designs.length ? '没有匹配的文件' : '还没有设计文件' }}
+                  </p>
+                </div>
+              </td>
+            </tr>
+            <AppTableRow v-for="design in filtered" :key="design.id">
+              <AppTableCell>
+                <RouterLink :to="`/designs/${design.id}`" class="console-name">
+                  <span class="console-name-text">{{ design.name }}</span>
+                </RouterLink>
+              </AppTableCell>
+              <AppTableCell class="console-time">{{ formatTime(design.updatedAt) }}</AppTableCell>
+              <AppTableCell class="console-time">{{ formatTime(design.createdAt) }}</AppTableCell>
+              <AppTableCell>
+                <div class="console-ops">
+                  <button
+                    type="button"
+                    class="console-op"
+                    @click="router.push(`/designs/${design.id}`)"
+                  >
+                    编辑
+                  </button>
+                  <button type="button" class="console-op" @click="openRename(design)">重命名</button>
+                  <button type="button" class="console-op" @click="openShare(design)">分享</button>
+                  <button type="button" class="console-op is-danger" @click="openDelete(design)">
+                    删除
+                  </button>
+                </div>
+              </AppTableCell>
+            </AppTableRow>
+          </AppTableBody>
+          <template #footer>
+            <template v-if="loading">加载中…</template>
+            <template v-else>共 {{ designs.length }} 条</template>
+          </template>
+        </AppTable>
+      </section>
+
+      <AppDialog
+        v-model:open="createOpen"
+        heading="新建设计文件"
+        size="sm"
+        :show-close="!creating"
+      >
+        <label class="block text-xs font-medium text-surface">
+          名称
+          <AppInput
+            ref="createInput"
+            v-model="createName"
+            class="mt-1.5 w-full"
+            size="md"
+            maxlength="120"
+            :disabled="creating"
+            required
+            @enter="submitCreate"
+          />
+        </label>
+        <template #footer>
+          <AppButton
+            color="neutral"
+            variant="ghost"
+            :disabled="creating"
+            @click="createOpen = false"
+          >
+            取消
+          </AppButton>
+          <AppButton color="primary" variant="solid" :loading="creating" @click="submitCreate">
+            创建
+          </AppButton>
+        </template>
+      </AppDialog>
+
+      <AppDialog v-model:open="renameOpen" heading="重命名" size="sm" :show-close="!renaming">
+        <label class="block text-xs font-medium text-surface">
+          名称
+          <AppInput
+            ref="renameInput"
+            v-model="renameName"
+            class="mt-1.5 w-full"
+            size="md"
+            maxlength="120"
+            :disabled="renaming"
+            required
+            @enter="submitRename"
+          />
+        </label>
+        <template #footer>
+          <AppButton
+            color="neutral"
+            variant="ghost"
+            :disabled="renaming"
+            @click="renameOpen = false"
+          >
+            取消
+          </AppButton>
+          <AppButton color="primary" variant="solid" :loading="renaming" @click="submitRename">
+            保存
+          </AppButton>
+        </template>
+      </AppDialog>
+
+      <AppConfirmationDialog
+        v-model:open="deleteOpen"
+        heading="删除设计文件"
+        :description="
+          deleteTarget ? `确认删除「${deleteTarget.name}」？此操作不可恢复。` : undefined
+        "
+        cancel-label="取消"
+        confirm-label="删除"
+        tone="danger"
+        @confirm="confirmDelete"
+        @cancel="deleteTarget = null"
+      />
+
+      <ShareDialog v-model:open="shareOpen" :design-id="shareDesignId" />
+    </main>
+  </div>
 </template>

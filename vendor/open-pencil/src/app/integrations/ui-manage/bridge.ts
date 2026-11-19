@@ -1,8 +1,8 @@
 /**
  * Bridge: open/save a design managed by ui-manage (Bearer + /api/designs/:id/content).
  *
- * Same-origin (源码内嵌): token from localStorage, apiBase defaults to ''.
- * Legacy iframe query: ?ui-manage=1&designId=&token=&apiBase=
+ * Token comes from the component session (localStorage / sessionStorage via auth).
+ * Legacy ?ui-manage=1&token= URL sessions are disabled.
  */
 import { notificationMessages } from "@/app/i18n/notifications";
 import { toast } from "@/app/shell/ui";
@@ -23,30 +23,20 @@ export type UiManageBridgeConfig = {
   designName?: string;
 };
 
-const TOKEN_KEY = "ui_manage_token";
-
+/** Disabled: never accept long-lived tokens from the URL. */
 export function parseUiManageBridge(
-  search: string
+  _search: string
 ): UiManageBridgeConfig | null {
-  const params = new URLSearchParams(search);
-  if (params.get("ui-manage") !== "1") return null;
-  const designId = params.get("designId")?.trim();
-  const token = params.get("token")?.trim();
-  if (!designId || !token) return null;
-  const apiBase = (params.get("apiBase") || "").replace(/\/$/, "");
-  return {
-    designId,
-    token,
-    apiBase,
-    designName: params.get("name") || undefined,
-  };
+  return null;
 }
 
 export function configFromDesignRoute(
   designId: string,
   designName?: string
 ): UiManageBridgeConfig | null {
-  const token = localStorage.getItem(TOKEN_KEY)?.trim();
+  const auth = useUiManageAuth();
+  if (!auth.ready.value) auth.loadFromStorage();
+  const token = auth.token.value?.trim() || "";
   if (!designId || !token) return null;
   return {
     designId,

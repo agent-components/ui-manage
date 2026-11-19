@@ -1,10 +1,20 @@
-import { cpSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineNitroConfig } from "nitropack/config";
 
-const includeEditorDist = process.env.NITRO_PUBLIC_DIST === "1";
+const rootDir = fileURLToPath(new URL(".", import.meta.url));
+const editorDist = join(rootDir, "vendor/open-pencil/dist");
+const outputPublic = join(rootDir, ".output/public");
+/** 打包时强制带上；开发时若已有前端产物也挂上，避免只起 API 时 /assets 404。 */
+const includeEditorDist =
+  process.env.NITRO_PUBLIC_DIST === "1" ||
+  existsSync(join(editorDist, "index.html")) ||
+  existsSync(join(outputPublic, "index.html"));
+const publicDir = existsSync(join(editorDist, "index.html"))
+  ? editorDist
+  : outputPublic;
 
 const require = createRequire(fileURLToPath(new URL("./package.json", import.meta.url)));
 const coreRequire = createRequire(require.resolve("@open-pencil/core/package.json"));
@@ -44,7 +54,7 @@ export default defineNitroConfig({
   srcDir: "server",
   preset: "node-server",
   publicAssets: includeEditorDist
-    ? [{ dir: "../vendor/open-pencil/dist", baseURL: "/" }]
+    ? [{ dir: publicDir, baseURL: "/" }]
     : [],
   routeRules: {
     "/": {

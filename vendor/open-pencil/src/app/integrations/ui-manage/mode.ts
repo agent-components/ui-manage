@@ -6,6 +6,16 @@ export const isUiManageEmbed =
 
 export { isUiManageSharePreview };
 
+/** True when the page is inside an iframe (cross-origin top also counts). */
+export function isEmbeddedFrame(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 /** Leave the single-design editor and return to the designs list (no empty Home tab). */
 export function leaveUiManageEditor(): void {
   if (!isUiManageEmbed) return;

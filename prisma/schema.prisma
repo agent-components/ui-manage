@@ -1,6 +1,5 @@
 generator client {
   provider      = "prisma-client-js"
-  // native：打包机本机；debian-openssl-3.0.x：常见 Linux 容器（Node 官方镜像 / 多数 K8s）
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -10,7 +9,38 @@ datasource db {
   schemas  = ["ui_manage"]
 }
 
-/// 业务表；登录复用 public.users，不在此建模以免迁移误改通用用户表。
+enum UserRole {
+  ADMIN
+  USER
+
+  @@schema("ui_manage")
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("ui_manage")
+}
+
+model User {
+  id             String     @id
+  account        String     @unique
+  password       String
+  displayName    String
+  phone          String?
+  role           UserRole   @default(USER)
+  status         UserStatus @default(ACTIVE)
+  token          String?    @unique
+  tokenExpiredAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt @default(now())
+  email          String?
+
+  @@map("users")
+  @@schema("ui_manage")
+}
+
 model Design {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -23,22 +53,5 @@ model Design {
 
   @@index([ownerAccount])
   @@map("designs")
-  @@schema("ui_manage")
-}
-
-/// MCP / API 访问令牌；校验用 token_hash，复制 MCP 配置用 token（仅本人可读）。
-model ApiToken {
-  id           String    @id @default(uuid()) @db.Uuid
-  ownerAccount String    @map("owner_account")
-  name         String
-  token        String
-  tokenHash    String    @unique @map("token_hash")
-  tokenPrefix  String    @map("token_prefix")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  lastUsedAt   DateTime? @map("last_used_at")
-  revokedAt    DateTime? @map("revoked_at")
-
-  @@index([ownerAccount])
-  @@map("api_tokens")
   @@schema("ui_manage")
 }

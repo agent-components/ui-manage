@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 
 import { openSettingsDialog } from '@/app/settings/dialog'
 import AccountAvatar from '@/components/presence/AccountAvatar.vue'
 
 import { useUiManageAuth } from './auth'
+import { isEmbeddedFrame } from './mode'
 import ProfileDialog from './ProfileDialog.vue'
 
 const { placement = 'sidebar' } = defineProps<{
@@ -18,6 +19,7 @@ const { user, logout } = useUiManageAuth()
 const menuOpen = ref(false)
 const profileOpen = ref(false)
 const displayName = computed(() => user.value?.displayName || user.value?.account || '')
+const embedded = isEmbeddedFrame()
 
 const itemClass =
   'flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover'
@@ -35,6 +37,10 @@ function openSystemSettings() {
 async function onLogout() {
   menuOpen.value = false
   await logout()
+  if (embedded) {
+    await router.replace({ name: 'ui-manage-harness-required' })
+    return
+  }
   await router.replace('/login')
 }
 </script>
@@ -66,24 +72,25 @@ async function onLogout() {
         :side-offset="8"
         class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
       >
-        <button type="button" :class="itemClass" @click="openProfile">
+        <button
+          v-if="!embedded"
+          type="button"
+          :class="itemClass"
+          @click="openProfile"
+        >
           <icon-lucide-user-pen class="size-3.5 text-muted" />
           修改资料
         </button>
-        <RouterLink v-if="placement === 'header'" to="/tokens" :class="itemClass">
-          <icon-lucide-key-round class="size-3.5 text-muted" />
-          访问令牌
-        </RouterLink>
         <button type="button" :class="itemClass" @click="openSystemSettings">
           <icon-lucide-settings class="size-3.5 text-muted" />
           系统设置
         </button>
-        <button type="button" :class="itemClass" @click="onLogout">
+        <button v-if="!embedded" type="button" :class="itemClass" @click="onLogout">
           <icon-lucide-log-out class="size-3.5 text-muted" />
           退出登录
         </button>
       </PopoverContent>
     </PopoverPortal>
   </PopoverRoot>
-  <ProfileDialog v-model:open="profileOpen" />
+  <ProfileDialog v-if="!embedded" v-model:open="profileOpen" />
 </template>

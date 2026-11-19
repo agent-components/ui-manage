@@ -5,7 +5,6 @@ type ProfileBody = {
   displayName?: string;
   email?: string | null;
   phone?: string | null;
-  aboutMe?: string | null;
   currentPassword?: string;
   newPassword?: string;
 };
@@ -49,7 +48,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const phone = emptyToNull(body.phone, 32, "手机");
-  const aboutMe = emptyToNull(body.aboutMe, 500, "个人简介");
   const currentPassword = body.currentPassword ?? "";
   const newPassword = body.newPassword ?? "";
 
@@ -72,7 +70,6 @@ export default defineEventHandler(async (event) => {
     displayName,
     email,
     phone,
-    aboutMe,
     currentPassword: newPassword ? currentPassword : undefined,
     newPassword: newPassword || undefined,
   });

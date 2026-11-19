@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createError, getHeader } from "h3";
 import type { H3Event } from "h3";
-import { hashApiToken, isApiTokenFormat } from "./api-token";
+import type { User, UserRole } from "@prisma/client";
 import { prisma } from "./prisma";
 
 export type AuthUser = {
@@ -10,34 +10,26 @@ export type AuthUser = {
   displayName: string;
   email: string | null;
   phone: string | null;
-  aboutMe: string | null;
+  role: UserRole;
 };
 
 export type ProfileUpdate = {
   displayName: string;
   email: string | null;
   phone: string | null;
-  aboutMe: string | null;
   currentPassword?: string;
   newPassword?: string;
 };
 
-const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const LOGIN_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const SSO_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
+export const SSO_DEFAULT_PASSWORD = "123456";
 
 function isUserToken(value: string): boolean {
   return /^[a-f0-9]{64}$/i.test(value);
 }
 
-type UserRow = {
-  id: string;
-  account: string;
-  displayName: string | null;
-  email: string | null;
-  phone: string | null;
-  aboutMe: string | null;
-};
-
-function toAuthUser(row: UserRow | undefined): AuthUser | null {
+function toAuthUser(row: User | null | undefined): AuthUser | null {
   if (!row?.account) return null;
   const displayName = row.displayName?.trim();
   return {
@@ -46,118 +38,79 @@ function toAuthUser(row: UserRow | undefined): AuthUser | null {
     displayName: displayName || row.account,
     email: row.email?.trim() || null,
     phone: row.phone?.trim() || null,
-    aboutMe: row.aboutMe?.trim() || null,
+    role: row.role,
   };
 }
 
-/** 登录名是 public.users.account。停用账号不能登录。密码比对与现网一致（明文等值）。 */
+/** 登录名是 users.account。停用账号不能登录。密码比对为明文等值。 */
 export async function authenticateUser(
   account: string,
   password: string
 ): Promise<AuthUser | null> {
-  const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName", email, phone, "aboutMe"
-    FROM public.users
-    WHERE account = ${account}
-      AND password = ${password}
-      AND status = 'ACTIVE'
-    LIMIT 1
-  `;
-  return toAuthUser(rows[0]);
+  const row = await prisma.user.findFirst({
+    where: { account, password, status: "ACTIVE" },
+  });
+  return toAuthUser(row);
 }
 
-/** 未过期则复用 public.users.token，否则签发新 token。 */
-export async function issueUserToken(account: string): Promise<string> {
-  const existing = await prisma.$queryRaw<{ token: string }[]>`
-    SELECT token
-    FROM public.users
-    WHERE account = ${account}
-      AND status = 'ACTIVE'
-      AND token IS NOT NULL
-      AND "tokenExpiredAt" > now()
-    LIMIT 1
-  `;
-  const current = existing[0]?.token;
-  if (current && isUserToken(current)) return current;
-
-  const token = randomBytes(32).toString("hex");
-  const expiredAt = new Date(Date.now() + TOKEN_TTL_MS);
-  const updated = await prisma.$executeRaw`
-    UPDATE public.users
-    SET token = ${token},
-        "tokenExpiredAt" = ${expiredAt},
-        "updatedAt" = now()
-    WHERE account = ${account} AND status = 'ACTIVE'
-  `;
-  if (!updated) {
+/**
+ * 未过期则复用 token，只重置过期时间。
+ * token 为空或已过期则签发新值。
+ */
+export async function issueUserToken(
+  account: string,
+  ttlMs: number = LOGIN_TOKEN_TTL_MS
+): Promise<string> {
+  const existing = await prisma.user.findFirst({
+    where: { account, status: "ACTIVE" },
+    select: { id: true, token: true, tokenExpiredAt: true },
+  });
+  if (!existing) {
     throw createError({ statusCode: 500, message: "无法写入登录 token" });
   }
+
+  const expiredAt = new Date(Date.now() + ttlMs);
+  const current = existing.token?.trim() || "";
+  const stillValid =
+    current &&
+    isUserToken(current) &&
+    existing.tokenExpiredAt != null &&
+    existing.tokenExpiredAt.getTime() > Date.now();
+
+  if (stillValid) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { tokenExpiredAt: expiredAt },
+    });
+    return current;
+  }
+
+  const token = randomBytes(32).toString("hex");
+  await prisma.user.update({
+    where: { id: existing.id },
+    data: { token, tokenExpiredAt: expiredAt },
+  });
   return token;
 }
 
 export async function findUserByToken(token: string): Promise<AuthUser | null> {
   if (!isUserToken(token)) return null;
-  const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName", email, phone, "aboutMe"
-    FROM public.users
-    WHERE token = ${token}
-      AND status = 'ACTIVE'
-      AND "tokenExpiredAt" > now()
-    LIMIT 1
-  `;
-  return toAuthUser(rows[0]);
-}
-
-/** MCP 访问令牌：按哈希匹配未撤销记录，并更新 last_used_at。 */
-export async function findUserByApiToken(
-  token: string
-): Promise<AuthUser | null> {
-  if (!isApiTokenFormat(token)) return null;
-  const tokenHash = hashApiToken(token);
-  const apiToken = await prisma.apiToken.findFirst({
-    where: { tokenHash, revokedAt: null },
-    select: { id: true, ownerAccount: true },
+  const row = await prisma.user.findFirst({
+    where: {
+      token,
+      status: "ACTIVE",
+      tokenExpiredAt: { gt: new Date() },
+    },
   });
-  if (!apiToken) return null;
-
-  const rows = await prisma.$queryRaw<UserRow[]>`
-    SELECT id, account, "displayName", email, phone, "aboutMe"
-    FROM public.users
-    WHERE account = ${apiToken.ownerAccount}
-      AND status = 'ACTIVE'
-    LIMIT 1
-  `;
-  const user = toAuthUser(rows[0]);
-  if (!user) return null;
-
-  await prisma.apiToken.update({
-    where: { id: apiToken.id },
-    data: { lastUsedAt: new Date() },
-  });
-  return user;
-}
-
-export async function requireApiTokenUser(event: H3Event): Promise<AuthUser> {
-  const token = extractBearerToken(event);
-  if (!token) {
-    throw createError({ statusCode: 401, message: "未提供访问令牌" });
-  }
-  const user = await findUserByApiToken(token);
-  if (!user) {
-    throw createError({ statusCode: 401, message: "访问令牌无效或已撤销" });
-  }
-  return user;
+  return toAuthUser(row);
 }
 
 export async function clearUserToken(token: string): Promise<void> {
   if (!isUserToken(token)) return;
-  await prisma.$executeRaw`
-    UPDATE public.users
-    SET token = NULL,
-        "tokenExpiredAt" = NULL,
-        "updatedAt" = now()
-    WHERE token = ${token}
-  `;
+  await prisma.user.updateMany({
+    where: { token },
+    data: { token: null, tokenExpiredAt: null },
+  });
 }
 
 export function extractBearerToken(event: H3Event): string | null {
@@ -167,47 +120,37 @@ export function extractBearerToken(event: H3Event): string | null {
   return match?.[1]?.trim() || null;
 }
 
-/** 更新显示名、邮箱、手机、简介；传入 newPassword 时先核对当前密码。 */
+/** 更新显示名、邮箱、手机；传入 newPassword 时先核对当前密码。 */
 export async function updateUserProfile(
   account: string,
   patch: ProfileUpdate
 ): Promise<AuthUser> {
-  if (patch.newPassword) {
-    const current = await prisma.$queryRaw<{ password: string }[]>`
-      SELECT password
-      FROM public.users
-      WHERE account = ${account} AND status = 'ACTIVE'
-      LIMIT 1
-    `;
-    if (!current[0] || current[0].password !== patch.currentPassword) {
-      throw createError({ statusCode: 400, message: "当前密码不正确" });
-    }
-  }
-
-  const rows = await prisma.$queryRaw<UserRow[]>`
-    UPDATE public.users
-    SET "displayName" = ${patch.displayName},
-        email = ${patch.email},
-        phone = ${patch.phone},
-        "aboutMe" = ${patch.aboutMe},
-        "updatedAt" = now()
-    WHERE account = ${account} AND status = 'ACTIVE'
-    RETURNING id, account, "displayName", email, phone, "aboutMe"
-  `;
-  const user = toAuthUser(rows[0]);
-  if (!user) {
+  const current = await prisma.user.findFirst({
+    where: { account, status: "ACTIVE" },
+  });
+  if (!current) {
     throw createError({ statusCode: 404, message: "账号不存在或已停用" });
   }
 
   if (patch.newPassword) {
-    await prisma.$executeRaw`
-      UPDATE public.users
-      SET password = ${patch.newPassword},
-          "updatedAt" = now()
-      WHERE account = ${account} AND status = 'ACTIVE'
-    `;
+    if (current.password !== patch.currentPassword) {
+      throw createError({ statusCode: 400, message: "当前密码不正确" });
+    }
   }
 
+  const row = await prisma.user.update({
+    where: { id: current.id },
+    data: {
+      displayName: patch.displayName,
+      email: patch.email,
+      phone: patch.phone,
+      ...(patch.newPassword ? { password: patch.newPassword } : {}),
+    },
+  });
+  const user = toAuthUser(row);
+  if (!user) {
+    throw createError({ statusCode: 404, message: "账号不存在或已停用" });
+  }
   return user;
 }
 
@@ -221,4 +164,120 @@ export async function requireUser(event: H3Event): Promise<AuthUser> {
     throw createError({ statusCode: 401, message: "登录已失效" });
   }
   return user;
+}
+
+type HarnessSsoUser = {
+  id: string;
+  account: string;
+  displayName: string;
+  role: "ADMIN" | "USER";
+};
+
+type HarnessSsoExchange = {
+  user: HarnessSsoUser;
+  componentId: string;
+};
+
+function harnessOrigin(): string {
+  const origin = process.env.HARNESS_ORIGIN?.trim().replace(/\/$/, "");
+  if (!origin) {
+    throw createError({ statusCode: 500, message: "未配置 HARNESS_ORIGIN" });
+  }
+  return origin;
+}
+
+function harnessComponentId(): string {
+  const id = process.env.HARNESS_COMPONENT_ID?.trim();
+  if (!id) {
+    throw createError({
+      statusCode: 500,
+      message: "未配置 HARNESS_COMPONENT_ID",
+    });
+  }
+  return id;
+}
+
+/** 向宿主兑换一次性票据，校验 componentId，缺用户则创建。 */
+export async function exchangeHarnessSso(code: string): Promise<{
+  token: string;
+  user: AuthUser;
+}> {
+  const trimmed = code.trim();
+  if (!trimmed) {
+    throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+  }
+
+  const expectedComponentId = harnessComponentId();
+  let payload: HarnessSsoExchange;
+  try {
+    const res = await fetch(`${harnessOrigin()}/api/sso/exchange`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: trimmed }),
+    });
+    const json = (await res.json().catch(() => null)) as
+      | HarnessSsoExchange
+      | { error?: string; message?: string }
+      | null;
+    if (
+      !res.ok ||
+      !json ||
+      !("user" in json) ||
+      !json.user?.id ||
+      !json.user?.account
+    ) {
+      throw createError({
+        statusCode: 400,
+        message: "请从 Harness Admin 打开",
+      });
+    }
+    payload = json as HarnessSsoExchange;
+  } catch (error) {
+    if (error && typeof error === "object" && "statusCode" in error) {
+      throw error;
+    }
+    throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+  }
+
+  if (payload.componentId !== expectedComponentId) {
+    throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+  }
+
+  const role: UserRole =
+    payload.user.role === "ADMIN" ? "ADMIN" : "USER";
+  const displayName =
+    payload.user.displayName?.trim() || payload.user.account;
+
+  let user = await prisma.user.findUnique({
+    where: { account: payload.user.account },
+  });
+
+  if (!user) {
+    const byId = await prisma.user.findUnique({
+      where: { id: payload.user.id },
+    });
+    if (byId) {
+      throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+    }
+    user = await prisma.user.create({
+      data: {
+        id: payload.user.id,
+        account: payload.user.account,
+        password: SSO_DEFAULT_PASSWORD,
+        displayName,
+        role,
+        status: "ACTIVE",
+      },
+    });
+  } else if (user.status !== "ACTIVE") {
+    throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+  }
+
+  const authUser = toAuthUser(user);
+  if (!authUser) {
+    throw createError({ statusCode: 400, message: "请从 Harness Admin 打开" });
+  }
+
+  const token = await issueUserToken(user.account, SSO_TOKEN_TTL_MS);
+  return { token, user: authUser };
 }

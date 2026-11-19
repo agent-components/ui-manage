@@ -179,11 +179,6 @@ export default defineConfig(async ({ command, mode }) => {
                 target: "http://127.0.0.1:3001",
                 changeOrigin: true,
               },
-              "/mcp": {
-                target: "http://127.0.0.1:3001",
-                changeOrigin: true,
-                xfwd: true,
-              },
             },
           }
         : {}),

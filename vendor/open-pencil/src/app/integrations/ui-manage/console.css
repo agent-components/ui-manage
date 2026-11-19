@@ -1,6 +1,15 @@
 /* Manage console. Scoped to .console so the editor theme stays untouched.
    Light values follow macOS: soft gray canvas, 12px panels, 10px controls. */
 
+.console.console-embed {
+  display: block;
+  overflow: auto;
+}
+
+.console.console-embed .console-page {
+  max-width: none;
+}
+
 .console {
   --c-bg: #f5f5f7;
   --c-panel: #ffffff;

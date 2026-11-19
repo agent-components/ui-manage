@@ -7,7 +7,6 @@ import { AppDialog } from '@/components/ui/dialog'
 import AppAlert from '@/components/ui/feedback/AppAlert.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
 import AppPasswordInput from '@/components/ui/input/AppPasswordInput.vue'
-import AppTextarea from '@/components/ui/input/AppTextarea.vue'
 
 import { useUiManageAuth, type AuthUser } from './auth'
 
@@ -17,7 +16,6 @@ const { user, refreshUser, updateProfile } = useUiManageAuth()
 const displayName = ref('')
 const email = ref('')
 const phone = ref('')
-const aboutMe = ref('')
 const currentPassword = ref('')
 const newPassword = ref('')
 const saving = ref(false)
@@ -27,7 +25,6 @@ function fill(source: AuthUser | null) {
   displayName.value = source?.displayName || source?.account || ''
   email.value = source?.email || ''
   phone.value = source?.phone || ''
-  aboutMe.value = source?.aboutMe || ''
   currentPassword.value = ''
   newPassword.value = ''
   error.value = ''
@@ -55,8 +52,7 @@ async function submit() {
     const body: Parameters<typeof updateProfile>[0] = {
       displayName: name,
       email: email.value.trim(),
-      phone: phone.value.trim(),
-      aboutMe: aboutMe.value.trim()
+      phone: phone.value.trim()
     }
     if (currentPassword.value || newPassword.value) {
       body.currentPassword = currentPassword.value
@@ -119,16 +115,6 @@ async function submit() {
           maxlength="32"
           :disabled="saving"
           @enter="submit"
-        />
-      </label>
-      <label class="block text-xs font-medium text-surface">
-        个人简介
-        <AppTextarea
-          v-model="aboutMe"
-          class="mt-1.5 w-full"
-          :rows="3"
-          maxlength="500"
-          :disabled="saving"
         />
       </label>
       <div class="border-t border-border pt-4">
