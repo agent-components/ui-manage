@@ -19,9 +19,11 @@ import {
   runDesignEntityTool,
 } from "./trpc/openapi/entities";
 import {
+  listHarnessTools,
   resolveDesignForOpenApi,
   runOpenApiTool,
 } from "./trpc/openapi/catalog";
+import { fillBoundParams, omitBoundParams } from "./trpc/openapi/bound";
 import { takeDocParams } from "./trpc/openapi/design";
 import { handleMcp, mcpEnabled } from "./trpc/openapi/mcp";
 import { appRouter } from "./trpc/router";
@@ -90,7 +92,7 @@ function corsHeaders(origin: string): Headers {
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set(
     "Access-Control-Allow-Headers",
-    "Authorization, Content-Type, If-Match, If-None-Match"
+    "Authorization, Content-Type, If-Match, If-None-Match, docId, docName, page_id, parent_id, x-doc-id, x-doc-name, x-page-id, x-parent-id"
   );
   headers.set("Access-Control-Expose-Headers", "ETag");
   headers.set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
@@ -188,7 +190,10 @@ async function handleApi(request: Request): Promise<Response | null> {
 
   if (pathname === "/api/harness/tools" && method === "GET") {
     const caller = appRouter.createCaller(await createContext(request));
-    return Response.json(await caller.harness.tools());
+    const listed = await caller.harness.tools();
+    return Response.json({
+      tools: omitBoundParams(listed.tools, request.headers),
+    });
   }
 
   const designContent = pathname.match(/^\/api\/designs\/([^/]+)\/content$/);
@@ -261,6 +266,10 @@ async function handleApi(request: Request): Promise<Response | null> {
       }
     }
     try {
+      const schema = listHarnessTools().find(
+        (tool) => tool.name === name
+      )?.inputSchema;
+      args = fillBoundParams(args, request.headers, schema);
       if (isDesignEntityTool(name)) {
         return Response.json(await runDesignEntityTool(name, args, user));
       }

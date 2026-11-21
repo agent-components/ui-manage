@@ -5,6 +5,7 @@ import {
   resolveDesignForOpenApi,
   runOpenApiTool,
 } from "./catalog";
+import { fillBoundParams, omitBoundParams } from "./bound";
 import { takeDocParams } from "./design";
 import { exportPngToolResponse, isExportPngTool } from "./png";
 
@@ -37,8 +38,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function protocolTools() {
-  return listHarnessTools().map((tool) => ({
+function protocolTools(headers: Headers) {
+  return omitBoundParams(listHarnessTools(), headers).map((tool) => ({
     name: tool.name,
     description: tool.description ?? "",
     inputSchema: tool.inputSchema ?? {
@@ -70,12 +71,17 @@ async function callTool(
   user: AuthUser,
   name: string,
   args: Record<string, unknown>,
-  origin: string
+  origin: string,
+  headers: Headers
 ): Promise<unknown> {
+  const schema = listHarnessTools().find(
+    (tool) => tool.name === name
+  )?.inputSchema;
+  const filled = fillBoundParams(args, headers, schema);
   if (isDesignEntityTool(name)) {
-    return runDesignEntityTool(name, args, user);
+    return runDesignEntityTool(name, filled, user);
   }
-  const { docId, docName, toolArgs } = takeDocParams(args);
+  const { docId, docName, toolArgs } = takeDocParams(filled);
   const design = await resolveDesignForOpenApi(user, docId, docName);
   return runOpenApiTool({
     name,
@@ -89,7 +95,8 @@ async function callTool(
 async function handleMethod(
   message: RpcMessage,
   user: AuthUser,
-  origin: string
+  origin: string,
+  headers: Headers
 ): Promise<unknown | undefined> {
   const method = typeof message.method === "string" ? message.method : "";
   const hasId = Object.prototype.hasOwnProperty.call(message, "id");
@@ -128,7 +135,7 @@ async function handleMethod(
   }
 
   if (method === "tools/list") {
-    return rpcResult(id, { tools: protocolTools() });
+    return rpcResult(id, { tools: protocolTools(headers) });
   }
 
   if (method === "tools/call") {
@@ -137,7 +144,7 @@ async function handleMethod(
     if (!name) return rpcError(id, -32602, "缺少工具名");
     const args = isRecord(params?.arguments) ? params.arguments : {};
     try {
-      const result = await callTool(user, name, args, origin);
+      const result = await callTool(user, name, args, origin, headers);
       return rpcResult(id, toolContent(name, result));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "工具执行失败";
@@ -193,7 +200,7 @@ export async function handleMcp(
         responses.push(rpcError(null, -32600, "Invalid Request"));
         continue;
       }
-      const response = await handleMethod(item, user, origin);
+      const response = await handleMethod(item, user, origin, request.headers);
       if (response !== undefined) responses.push(response);
     }
     if (responses.length === 0) return new Response(null, { status: 202 });
@@ -206,7 +213,7 @@ export async function handleMcp(
     });
   }
 
-  const response = await handleMethod(parsed, user, origin);
+  const response = await handleMethod(parsed, user, origin, request.headers);
   if (response === undefined) return new Response(null, { status: 202 });
   return Response.json(response);
 }
