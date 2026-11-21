@@ -1,12 +1,7 @@
 import { useUiManageAuth } from '@/app/integrations/ui-manage/auth'
+import { trpc } from '@/app/integrations/ui-manage/trpc'
 
 import type { LibraryObjectStore } from './storage'
-
-type ListedObject = {
-  key: string
-  size: number | null
-  etag: string | null
-}
 
 function requestHeaders(): HeadersInit {
   const auth = useUiManageAuth()
@@ -62,11 +57,7 @@ export class RemoteLibraryObjectStore implements LibraryObjectStore {
   async listObjects(
     prefix: string
   ): Promise<Array<{ key: string; size: number | null; etag: string | null }>> {
-    const res = await fetch(`/api/libraries/objects?prefix=${encodeURIComponent(prefix)}`, {
-      headers: requestHeaders()
-    })
-    if (!res.ok) throw new Error(await errorMessage(res))
-    const data = (await res.json()) as { objects?: ListedObject[] }
+    const data = await trpc.libraries.list.query({ prefix })
     return data.objects ?? []
   }
 }

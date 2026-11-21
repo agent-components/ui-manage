@@ -174,10 +174,9 @@ onMounted(refresh)
   <ManageShell v-if="!embedded" active="designs" title="设计文件">
     <template #actions>
       <AppButton
-        class="console-btn"
         color="primary"
         variant="solid"
-        size="md"
+        size="sm"
         :disabled="creating"
         @click="openCreate"
       >
@@ -190,30 +189,22 @@ onMounted(refresh)
 
     <AppAlert v-if="error" tone="error" :heading="error" />
 
-    <section class="console-card">
+    <section class="console-toolbar">
       <form class="console-filter" @submit.prevent="applySearch">
-        <label class="console-field-label">
-          <span>关键词</span>
-          <AppInput
-            v-model="draftQuery"
-            class="console-field w-full"
-            size="md"
-            placeholder="按名称搜索"
-            aria-label="按名称搜索"
-          />
-        </label>
+        <AppInput
+          v-model="draftQuery"
+          class="console-search"
+          size="sm"
+          placeholder="按名称搜索"
+          aria-label="按名称搜索"
+        >
+          <template #leading>
+            <icon-lucide-search class="size-3.5" />
+          </template>
+        </AppInput>
         <div class="console-filter-actions">
-          <AppButton class="console-btn" color="primary" variant="solid" size="md" type="submit">
-            搜索
-          </AppButton>
-          <AppButton
-            class="console-btn console-btn-plain"
-            color="neutral"
-            variant="outline"
-            size="md"
-            type="button"
-            @click="resetSearch"
-          >
+          <AppButton color="primary" variant="solid" size="sm" type="submit">搜索</AppButton>
+          <AppButton color="neutral" variant="outline" size="sm" type="button" @click="resetSearch">
             重置
           </AppButton>
         </div>
@@ -415,10 +406,9 @@ onMounted(refresh)
         </div>
         <div class="shrink-0">
           <AppButton
-            class="console-btn"
             color="primary"
             variant="solid"
-            size="md"
+            size="sm"
             :disabled="creating"
             @click="openCreate"
           >
@@ -432,27 +422,25 @@ onMounted(refresh)
 
       <AppAlert v-if="error" tone="error" :heading="error" />
 
-      <section class="console-card">
+      <section class="console-toolbar">
         <form class="console-filter" @submit.prevent="applySearch">
-          <label class="console-field-label">
-            <span>关键词</span>
-            <AppInput
-              v-model="draftQuery"
-              class="console-field w-full"
-              size="md"
-              placeholder="按名称搜索"
-              aria-label="按名称搜索"
-            />
-          </label>
+          <AppInput
+            v-model="draftQuery"
+            class="console-search"
+            size="sm"
+            placeholder="按名称搜索"
+            aria-label="按名称搜索"
+          >
+            <template #leading>
+              <icon-lucide-search class="size-3.5" />
+            </template>
+          </AppInput>
           <div class="console-filter-actions">
-            <AppButton class="console-btn" color="primary" variant="solid" size="md" type="submit">
-              搜索
-            </AppButton>
+            <AppButton color="primary" variant="solid" size="sm" type="submit">搜索</AppButton>
             <AppButton
-              class="console-btn console-btn-plain"
               color="neutral"
               variant="outline"
-              size="md"
+              size="sm"
               type="button"
               @click="resetSearch"
             >

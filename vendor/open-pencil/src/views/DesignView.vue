@@ -115,7 +115,7 @@ onMounted(async () => {
     return
   }
 
-  // ui-manage: open/save only via Nitro `/api/designs/:id/content` (login required).
+  // ui-manage: open/save only via `/api/designs/:id/content` (login required).
   if (uiManageEmbed && props.id) {
     const auth = useUiManageAuth()
     if (!(await auth.ensureSession())) {

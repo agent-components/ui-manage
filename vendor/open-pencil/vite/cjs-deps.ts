@@ -15,6 +15,7 @@ export const openPencilForceBundle = [
   'css-tree',
   'cssesc',
   'entities',
+  'events',
   'fflate',
   'image-size',
   'postcss-value-parser',

@@ -1,6 +1,7 @@
 import { ref } from "vue";
 
-import { isEmbeddedFrame } from "./mode";
+import { sessionStore, TOKEN_KEY, USER_KEY } from "./session";
+import { trpc } from "./trpc";
 
 export type AuthUser = {
   id: string;
@@ -19,39 +20,15 @@ export type ProfileUpdate = {
   newPassword?: string;
 };
 
-const TOKEN_KEY = "ui_manage_token";
-const USER_KEY = "ui_manage_user";
-
 const token = ref<string | null>(null);
 const user = ref<AuthUser | null>(null);
 const ready = ref(false);
-/** Avoid hitting /api/auth/me on every navigation once the session is known good. */
+/** Avoid hitting auth.me on every navigation once the session is known good. */
 let sessionOk = false;
-
-function storage(): Storage {
-  return isEmbeddedFrame() ? sessionStorage : localStorage;
-}
-
-async function readJson<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let message = `请求失败 (${res.status})`;
-    try {
-      const data = (await res.json()) as {
-        message?: string;
-        statusMessage?: string;
-      };
-      message = data.message || data.statusMessage || message;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-  return (await res.json()) as T;
-}
 
 export function useUiManageAuth() {
   function loadFromStorage() {
-    const store = storage();
+    const store = sessionStore();
     token.value = store.getItem(TOKEN_KEY);
     const raw = store.getItem(USER_KEY);
     if (raw) {
@@ -65,7 +42,7 @@ export function useUiManageAuth() {
   }
 
   function persist(nextToken: string, nextUser: AuthUser) {
-    const store = storage();
+    const store = sessionStore();
     token.value = nextToken;
     user.value = nextUser;
     sessionOk = true;
@@ -74,14 +51,14 @@ export function useUiManageAuth() {
   }
 
   function applyUser(nextUser: AuthUser) {
-    const store = storage();
+    const store = sessionStore();
     user.value = nextUser;
     sessionOk = true;
     store.setItem(USER_KEY, JSON.stringify(nextUser));
   }
 
   function clear() {
-    const store = storage();
+    const store = sessionStore();
     token.value = null;
     user.value = null;
     sessionOk = false;
@@ -100,14 +77,9 @@ export function useUiManageAuth() {
     if (!token.value) return false;
     if (sessionOk && user.value) return true;
     try {
-      const res = await fetch("/api/auth/me", { headers: authHeaders() });
-      if (!res.ok) {
-        clear();
-        return false;
-      }
-      const me = await readJson<AuthUser>(res);
+      const me = await trpc.auth.me.query();
       user.value = me;
-      storage().setItem(USER_KEY, JSON.stringify(me));
+      sessionStore().setItem(USER_KEY, JSON.stringify(me));
       sessionOk = true;
       return true;
     } catch {
@@ -117,54 +89,33 @@ export function useUiManageAuth() {
   }
 
   async function login(account: string, password: string) {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account, password }),
-    });
-    const result = await readJson<{ token: string; user: AuthUser }>(res);
+    const result = await trpc.auth.login.mutate({ account, password });
     persist(result.token, result.user);
     return result;
   }
 
   async function exchangeSso(code: string) {
-    const res = await fetch("/api/auth/sso", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    });
-    const result = await readJson<{ token: string; user: AuthUser }>(res);
+    const result = await trpc.auth.sso.mutate({ code });
     persist(result.token, result.user);
     return result;
   }
 
   async function refreshUser() {
     if (!ready.value) loadFromStorage();
-    const res = await fetch("/api/auth/me", { headers: authHeaders() });
-    const me = await readJson<AuthUser>(res);
+    const me = await trpc.auth.me.query();
     applyUser(me);
     return me;
   }
 
   async function updateProfile(body: ProfileUpdate) {
-    const res = await fetch("/api/auth/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify(body),
-    });
-    const me = await readJson<AuthUser>(res);
+    const me = await trpc.auth.updateProfile.mutate(body);
     applyUser(me);
     return me;
   }
 
   async function logout() {
     try {
-      if (token.value) {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: authHeaders(),
-        });
-      }
+      if (token.value) await trpc.auth.logout.mutate();
     } finally {
       clear();
     }

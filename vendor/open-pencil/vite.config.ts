@@ -84,7 +84,14 @@ export default defineConfig(async ({ command, mode }) => {
 
   return {
     resolve: {
-      alias: createOpenPencilAliases(__dirname),
+      alias: [
+        ...createOpenPencilAliases(__dirname),
+        // image-size → queue imports Node's `events`. Use the browser polyfill.
+        {
+          find: /^events$/,
+          replacement: resolve(__dirname, "node_modules/events/events.js"),
+        },
+      ],
     },
     define: {
       __OPENPENCIL_APP_VERSION__: JSON.stringify(packageJson.version),

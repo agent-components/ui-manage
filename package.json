@@ -4,35 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm dev:api\" \"pnpm dev:web\"",
-    "dev:api": "nitro dev --host 0.0.0.0 --port 3001",
+    "dev:api": "pnpm --filter @ui-manage/server dev",
     "dev:web": "cd vendor/open-pencil && OPENPENCIL_UI_MANAGE=1 npx vite --host 0.0.0.0 --port 5173 --strictPort",
     "editor:install": "cd vendor/open-pencil && bun install",
-    "build": "nitro build",
+    "build": "pnpm --filter @ui-manage/server build",
     "pack": "bash scripts/pack.sh",
-    "preview": "node .output/server/index.mjs",
-    "postinstall": "prisma generate",
+    "preview": "pnpm --filter @ui-manage/server preview",
+    "db:init": "pnpm --filter @ui-manage/prisma run init-admin",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "prisma:generate": "prisma generate"
   },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.758.0",
-    "@open-pencil/core": "0.17.0-beta.2",
-    "@open-pencil/fig": "0.17.0-beta.2",
-    "@open-pencil/kiwi": "0.17.0-beta.2",
-    "@open-pencil/scene-graph": "0.17.0-beta.2",
-    "@prisma/client": "^6.5.0",
-    "@valibot/to-json-schema": "^1.8.0",
-    "h3": "^1.15.1",
-    "ofetch": "^1.4.1",
-    "valibot": "^1.5.0",
-    "zod": "^4.6.7",
-    "zod-to-json-schema": "^3.25.2"
-  },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "nitropack": "^2.11.9",
-    "prisma": "^6.5.0",
-    "typescript": "^5.8.2"
+    "dotenv": "^18.0.10",
+    "prisma": "^7.10.1"
   }
 }

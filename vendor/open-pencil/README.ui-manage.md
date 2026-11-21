@@ -5,14 +5,14 @@
 - **App**：官方 `v0.17.0-beta.2` 壳（含 `/login` → `/designs` → 编辑器）
 - **库**：公开 npm `@open-pencil/*@0.17.0-beta.2`（`canvaskit@0.16.0`）
 - **本地洞**：`shims/`（含 `@open-pencil/collab` stub；多人协作已去掉）
-- **后端**：只走仓库根目录 `server/` + `prisma/`（Vite proxy `/api` → Nitro `:3001`）
+- **后端**：只走仓库根目录 `server/` + `prisma/`（Vite proxy `/api` → tRPC `:3001`）
 - **不接入**官方 Cloud / `@open-pencil/cloud`。构建固定把 Cloud 入口指到空实现，没有开关
 
 ## 启动
 
 ```bash
 pnpm editor:install
-pnpm dev          # api=nitro:3001 + web=vite:5173
+pnpm dev          # api=trpc:3001 + web=vite:5173
 ```
 
 ## 已裁能力

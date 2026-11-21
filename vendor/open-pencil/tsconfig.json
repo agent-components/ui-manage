@@ -27,6 +27,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
+      "@ui-manage/server/router": [
+        "../../server/trpc/router.ts"
+      ],
       "#vite-config/*": [
         "./vite/*"
       ],

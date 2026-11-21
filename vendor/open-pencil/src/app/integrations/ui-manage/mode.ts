@@ -1,20 +1,11 @@
 import { isUiManageSharePreview } from "./share-bridge";
+import { isEmbeddedFrame } from "./session";
 
 /** Built with OPENPENCIL_UI_MANAGE / VITE_OPENPENCIL_UI_MANAGE=1. */
 export const isUiManageEmbed =
   import.meta.env.VITE_OPENPENCIL_UI_MANAGE === "1";
 
-export { isUiManageSharePreview };
-
-/** True when the page is inside an iframe (cross-origin top also counts). */
-export function isEmbeddedFrame(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-}
+export { isEmbeddedFrame, isUiManageSharePreview };
 
 /** Leave the single-design editor and return to the designs list (no empty Home tab). */
 export function leaveUiManageEditor(): void {

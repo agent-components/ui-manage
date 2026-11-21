@@ -22,7 +22,7 @@ const displayName = computed(() => user.value?.displayName || user.value?.accoun
 const embedded = isEmbeddedFrame()
 
 const itemClass =
-  'flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-surface outline-none hover:bg-hover'
+  'flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-surface outline-none hover:bg-hover'
 
 function openProfile() {
   menuOpen.value = false
@@ -53,7 +53,7 @@ async function onLogout() {
       :aria-label="displayName ? `${displayName}，账户菜单` : '账户菜单'"
     >
       <span
-        class="truncate text-[13px] text-surface"
+        class="truncate text-xs text-surface"
         :class="placement === 'sidebar' ? 'min-w-0' : 'max-w-24'"
       >
         {{ displayName }}
@@ -70,7 +70,7 @@ async function onLogout() {
         :side="placement === 'sidebar' ? 'top' : 'bottom'"
         :align="placement === 'sidebar' ? 'start' : 'end'"
         :side-offset="8"
-        class="z-50 min-w-40 rounded-lg border border-border bg-panel p-1 shadow-md outline-none"
+        class="z-50 min-w-40 rounded-xl bg-panel p-1 text-surface shadow-[0_0_0_1px_var(--color-border),0_8px_30px_rgb(0_0_0/0.4)] outline-none"
       >
         <button
           v-if="!embedded"

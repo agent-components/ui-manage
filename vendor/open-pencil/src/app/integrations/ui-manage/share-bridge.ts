@@ -1,5 +1,6 @@
 /**
- * Public share preview: load via /api/share/:token, always read-only, poll updatedAt.
+ * Public share preview: metadata via tRPC, file bytes via /api/share/:token/content.
+ * Always read-only, poll updatedAt.
  */
 import { ref } from "vue";
 
@@ -12,6 +13,7 @@ import {
 } from "@/app/tabs";
 
 import { settleSharePageText } from "./share-text";
+import { trpc } from "./trpc";
 
 const POLL_MS = 10_000;
 
@@ -52,13 +54,12 @@ function takeDocumentTab(): Tab {
 }
 
 async function fetchShareMeta(token: string): Promise<ShareMeta> {
-  const res = await fetch(`/api/share/${encodeURIComponent(token)}`);
-  if (!res.ok) {
-    throw new Error(
-      res.status === 404 ? "分享不存在或已关闭" : `加载分享失败 (${res.status})`
-    );
+  try {
+    return await trpc.share.meta.query({ token });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "加载分享失败";
+    throw new Error(message || "加载分享失败");
   }
-  return (await res.json()) as ShareMeta;
 }
 
 async function fetchShareBytes(token: string): Promise<Uint8Array> {

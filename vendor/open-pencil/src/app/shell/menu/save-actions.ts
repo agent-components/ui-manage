@@ -32,7 +32,7 @@ export function createSaveMenuActions(store: EditorStore) {
       }
       if (isUiManageEmbed) {
         toast.info(
-          "请使用「导出选区 → .fig」下载文件；⌘/Ctrl+S 会保存到设计稿管理"
+          "请使用「导出选区 → .fig」下载文件；⌘/Ctrl+S 会保存到设计稿"
         );
         return;
       }

@@ -1,0 +1,31 @@
+{
+  "name": "@ui-manage/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./router": "./trpc/router.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false index.ts",
+    "start": "tsx index.ts",
+    "preview": "NODE_ENV=production PORT=3000 tsx index.ts",
+    "build": "tsc --noEmit --pretty false --strict --module esnext --moduleResolution bundler --target esnext --skipLibCheck --esModuleInterop --typeRoots ../vendor/open-pencil/node_modules/@types index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
+    "@open-pencil/core": "0.17.0-beta.2",
+    "@open-pencil/scene-graph": "0.17.0-beta.2",
+    "@prisma/adapter-pg": "7.10.1",
+    "@trpc/server": "11.29.5",
+    "@ui-manage/prisma": "workspace:*",
+    "@valibot/to-json-schema": "^1.8.0",
+    "pg": "^8.23.1",
+    "tsx": "^4.20.6",
+    "valibot": "^1.5.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

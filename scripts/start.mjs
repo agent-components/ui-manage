@@ -1,14 +1,16 @@
 /**
  * 发布包入口。由 scripts/pack.sh 复制到 release/ui-manage/start.mjs。
- * 读取同目录 .env（不覆盖已经存在的环境变量），再启动 Nitro。
+ * 读取同目录 .env（不覆盖已经存在的环境变量），再启动 tRPC 服务。
  */
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-// Release layout keeps this file beside .output. In the repo it lives in scripts/.
-const root = existsSync(resolve(here, ".output/server/index.mjs"))
+// 发布目录里 start.mjs 与 server/ 同级；仓库里它在 scripts/。
+const root = existsSync(resolve(here, "server/index.ts"))
   ? here
   : resolve(here, "..");
 
@@ -38,4 +40,14 @@ process.env.NODE_ENV ||= "production";
 process.env.PORT ||= "3000";
 process.env.HOST ||= "0.0.0.0";
 
-await import(pathToFileURL(resolve(root, ".output/server/index.mjs")).href);
+const require = createRequire(resolve(root, "server/package.json"));
+const tsx = require.resolve("tsx");
+const child = spawn(
+  process.execPath,
+  ["--import", tsx, resolve(root, "server/index.ts")],
+  { cwd: root, stdio: "inherit", env: process.env }
+);
+child.on("exit", (code, signal) => {
+  if (signal) process.kill(process.pid, signal);
+  process.exit(code ?? 1);
+});
