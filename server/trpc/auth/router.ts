@@ -5,6 +5,7 @@ import {
   clearUserToken,
   exchangeHarnessSso,
   issueUserToken,
+  readUserToken,
   updateUserProfile,
 } from "./session";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
@@ -83,6 +84,17 @@ export const authRouter = router({
     }),
 
   me: protectedProcedure.query(({ ctx }) => ctx.user),
+
+  token: protectedProcedure.query(async ({ ctx }) => {
+    const token = await readUserToken(ctx.user.account);
+    if (!token) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "当前用户没有令牌",
+      });
+    }
+    return { token };
+  }),
 
   updateProfile: protectedProcedure
     .input(profileInput)

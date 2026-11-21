@@ -7,6 +7,7 @@ import { openSettingsDialog } from '@/app/settings/dialog'
 import AccountAvatar from '@/components/presence/AccountAvatar.vue'
 
 import { useUiManageAuth } from './auth'
+import McpConnectDialog from './McpConnectDialog.vue'
 import { isEmbeddedFrame } from './mode'
 import ProfileDialog from './ProfileDialog.vue'
 
@@ -18,6 +19,7 @@ const router = useRouter()
 const { user, logout } = useUiManageAuth()
 const menuOpen = ref(false)
 const profileOpen = ref(false)
+const mcpOpen = ref(false)
 const displayName = computed(() => user.value?.displayName || user.value?.account || '')
 const embedded = isEmbeddedFrame()
 
@@ -27,6 +29,11 @@ const itemClass =
 function openProfile() {
   menuOpen.value = false
   profileOpen.value = true
+}
+
+function openMcp() {
+  menuOpen.value = false
+  mcpOpen.value = true
 }
 
 function openSystemSettings() {
@@ -72,6 +79,10 @@ async function onLogout() {
         :side-offset="8"
         class="z-50 min-w-40 rounded-xl bg-panel p-1 text-surface shadow-[0_0_0_1px_var(--color-border),0_8px_30px_rgb(0_0_0/0.4)] outline-none"
       >
+        <button type="button" :class="itemClass" @click="openMcp">
+          <icon-lucide-plug class="size-3.5 text-muted" />
+          接入 MCP
+        </button>
         <button
           v-if="!embedded"
           type="button"
@@ -93,4 +104,5 @@ async function onLogout() {
     </PopoverPortal>
   </PopoverRoot>
   <ProfileDialog v-if="!embedded" v-model:open="profileOpen" />
+  <McpConnectDialog v-model:open="mcpOpen" />
 </template>

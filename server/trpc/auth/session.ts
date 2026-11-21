@@ -92,6 +92,16 @@ export async function issueUserToken(
   return token;
 }
 
+/** 当前登录用户写在 users.token 上的那一枚令牌，不新签发。 */
+export async function readUserToken(account: string): Promise<string | null> {
+  const row = await prisma.user.findUnique({
+    where: { account },
+    select: { token: true },
+  });
+  const token = row?.token?.trim() || "";
+  return token || null;
+}
+
 export async function findUserByToken(token: string): Promise<AuthUser | null> {
   if (!isUserToken(token)) return null;
   const row = await prisma.user.findFirst({
