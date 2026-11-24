@@ -1,0 +1,29 @@
+# sealos-net: package mirrors (generated from .sealos/Dockerfile.app); do not edit
+# ui-manage 生产镜像：前端产物（vendor/open-pencil/dist，构建前先生成）+ tRPC 服务（tsx 直接跑 TS）
+FROM node:22-slim
+ENV npm_config_registry=https://registry.npmmirror.com
+
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=3000
+
+WORKDIR /app
+
+RUN npm install -g pnpm@10.32.1 --no-fund --no-audit
+
+# 先只装依赖，代码改动可复用这一层
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY prisma/package.json ./prisma/package.json
+COPY server/package.json ./server/package.json
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+COPY prisma ./prisma
+COPY server ./server
+# 前端构建产物：http.ts 的 findPublicDir 会先用 cwd/public
+COPY vendor/open-pencil/dist ./public
+COPY .sealos/bootstrap.mjs ./server/bootstrap.mjs
+
+EXPOSE 3000
+
+# 启动前建 schema/表、播种管理员，然后拉起 tRPC 服务
+CMD ["node", "server/bootstrap.mjs"]
