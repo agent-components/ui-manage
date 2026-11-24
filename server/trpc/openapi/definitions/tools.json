@@ -90,19 +90,19 @@
           "type": "string",
           "description": "页面节点 ID。不传 root_id 时必填。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -122,20 +122,20 @@
           "type": "number",
           "description": "Max depth of children to include (0 = no children). Default: unlimited"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -173,20 +173,20 @@
           "type": "string",
           "description": "页面节点 ID。服务不记住当前页，每次调用都要带上。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "page_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -206,20 +206,20 @@
           "type": "string",
           "description": "Write JSX to this path instead of returning it (requires OPENPENCIL_MCP_ROOT)"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -251,19 +251,19 @@
           "type": "number",
           "description": "Grid size for alignment checks (default: 8)"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -275,19 +275,19 @@
     "inputSchema": {
       "type": "object",
       "properties": {
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -303,20 +303,20 @@
           "type": "string",
           "description": "Node ID"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -336,20 +336,20 @@
           "type": "number",
           "description": "Max depth (default: unlimited)"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -369,20 +369,20 @@
           "type": "number",
           "description": "Max depth to traverse"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -398,20 +398,20 @@
           "type": "string",
           "description": "Node ID"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -427,20 +427,20 @@
           "type": "string",
           "description": "页面节点 ID。服务不记住当前页，每次调用都要带上。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "page_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -492,12 +492,12 @@
           "type": "string",
           "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -509,8 +509,8 @@
         "width",
         "height",
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -546,20 +546,20 @@
           "type": "string",
           "description": "要渲染的 JSX。自己画的形状写成一个图层，例如 <Vector d=\"M2 12 L22 12\" stroke=\"#000\" />，样式和普通图层一样；内嵌 <svg> 适合放从别处拷来的图形，只画它的形状，不含文字。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "jsx",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -575,20 +575,20 @@
           "type": "string",
           "description": "Page name"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "name",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -632,12 +632,12 @@
           "type": "string",
           "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -646,8 +646,8 @@
         "x",
         "y",
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -683,12 +683,12 @@
           "type": "number",
           "description": "Y position"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -696,8 +696,8 @@
       "required": [
         "svg",
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -713,20 +713,20 @@
           "type": "string",
           "description": "Node ID to convert"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -754,12 +754,12 @@
           "type": "string",
           "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -767,8 +767,8 @@
       "required": [
         "component_id",
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -788,20 +788,20 @@
           "minItems": 1,
           "description": "Node IDs to convert"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "ids",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -829,20 +829,20 @@
           "type": "string",
           "description": "Filter by icon set prefix (e.g. \"lucide\", \"mdi\")"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "queries",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -878,20 +878,20 @@
           "type": "string",
           "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -977,20 +977,20 @@
           "type": "string",
           "description": "Layer name"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1006,20 +1006,20 @@
           "type": "string",
           "description": "JSON array: [{\"id\":\"0:5\",\"props\":{\"spacing\":8}},{\"id\":\"0:6\",\"props\":{\"sizing_horizontal\":\"FILL\",\"grow\":1}}]"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "operations",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1053,12 +1053,12 @@
           "type": "string",
           "description": "Gradient direction"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1066,8 +1066,8 @@
       "required": [
         "id",
         "color",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1098,12 +1098,12 @@
           "description": "Image scale mode",
           "default": "FILL"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1111,8 +1111,8 @@
       "required": [
         "id",
         "image_data",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1148,12 +1148,12 @@
           "description": "Stroke alignment",
           "default": "INSIDE"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1161,8 +1161,8 @@
       "required": [
         "id",
         "color",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1213,12 +1213,12 @@
           "description": "Shadow spread",
           "default": 0
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1226,8 +1226,8 @@
       "required": [
         "id",
         "type",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1300,20 +1300,20 @@
           "type": "string",
           "description": "Child flow direction for auto-layout. AUTO inherits from parent."
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1372,20 +1372,20 @@
           "type": "string",
           "description": "ABSOLUTE to take node out of auto-layout flow"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1426,20 +1426,20 @@
           "minimum": 0,
           "description": "Bottom-left radius"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1461,12 +1461,12 @@
           "maximum": 1,
           "description": "Opacity (0-1)"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1474,8 +1474,8 @@
       "required": [
         "id",
         "value",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1495,12 +1495,12 @@
           "type": "number",
           "description": "Rotation angle in degrees"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1508,8 +1508,8 @@
       "required": [
         "id",
         "angle",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1529,12 +1529,12 @@
           "type": "boolean",
           "description": "Visible (true/false)"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1542,8 +1542,8 @@
       "required": [
         "id",
         "value",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1581,20 +1581,20 @@
           "type": "string",
           "description": "Vertical constraint"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1630,20 +1630,20 @@
           "minimum": 0,
           "description": "Maximum height"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1667,12 +1667,12 @@
           "type": "boolean",
           "description": "把 text 当 Markdown 读：# 和 ## 标题、**粗体**、*斜体*、~~删除线~~、`code`、[链接](url)、列表、> 引用会变成带样式的段落，套在文本自身样式上。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1680,8 +1680,8 @@
       "required": [
         "id",
         "text",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1744,20 +1744,20 @@
           "type": "string",
           "description": "Text decoration"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1798,20 +1798,20 @@
           },
           "description": "Variable font axis values by OpenType tag (e.g. {\"wght\": 550, \"wdth\": 75}); axes left out keep the style's values. Without a style, the nearest named style is picked."
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1837,12 +1837,12 @@
           "minimum": 1,
           "description": "Height"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1851,8 +1851,8 @@
         "id",
         "width",
         "height",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1876,12 +1876,12 @@
           "type": "number",
           "description": "Y position"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1890,8 +1890,8 @@
         "id",
         "x",
         "y",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1907,20 +1907,20 @@
           "type": "string",
           "description": "Node ID to delete"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1936,20 +1936,20 @@
           "type": "string",
           "description": "Node ID to clone"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1969,12 +1969,12 @@
           "type": "string",
           "description": "New name"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -1982,8 +1982,8 @@
       "required": [
         "id",
         "name",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2003,12 +2003,12 @@
           "type": "string",
           "description": "New parent node ID"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
@@ -2016,8 +2016,8 @@
       "required": [
         "id",
         "parent_id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2037,20 +2037,20 @@
           "minItems": 2,
           "description": "Node IDs to group"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "ids",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2066,20 +2066,20 @@
           "type": "string",
           "description": "Group node ID"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
         "id",
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2107,19 +2107,19 @@
           "type": "string",
           "description": "页面节点 ID。不传 ids 时必填，导出该页全部顶层节点。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2157,19 +2157,19 @@
           "type": "string",
           "description": "页面节点 ID。不传 ids 时必填，导出该页全部顶层节点。服务不记住当前页。"
         },
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ],
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2181,20 +2181,20 @@
     "inputSchema": {
       "type": "object",
       "properties": {
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "additionalProperties": false,
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ]
     }
   },
@@ -2204,20 +2204,20 @@
     "inputSchema": {
       "type": "object",
       "properties": {
-        "docId": {
+        "doc_id": {
           "type": "string",
           "format": "uuid",
-          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+          "description": "设计稿 ID（UUID）。稿不存在时与 doc_name 一起创建。"
         },
-        "docName": {
+        "doc_name": {
           "type": "string",
           "description": "设计稿名称。稿不存在时用于创建。"
         }
       },
       "additionalProperties": false,
       "required": [
-        "docId",
-        "docName"
+        "doc_id",
+        "doc_name"
       ]
     }
   }

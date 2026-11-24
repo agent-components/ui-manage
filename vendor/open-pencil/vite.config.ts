@@ -12,13 +12,8 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import packageJson from "./package.json";
 import { viteBuildTarget } from "./src/app/shell/support/baseline";
 import { createOpenPencilAliases } from "./vite/aliases";
-import {
-  localAutomationRoute,
-  localAutomationToken,
-  openPencilAutomationPlugin,
-} from "./vite/automation-stub";
+import { localAutomationRoute } from "./vite/automation-stub";
 import { bootSplashPlugin } from "./vite/boot-splash";
-import { donationDefine } from "./vite/funding";
 import { aiIconCollection } from "./vite/icons";
 import { inlineScriptPlugin } from "./vite/inline-script";
 import { metricsBrandPlugin } from "./vite/metrics";
@@ -34,7 +29,6 @@ import { createDevServerOptions } from "./vite/server";
 ensureHoistedCjsDeps(__dirname);
 
 const host = process.env.TAURI_DEV_HOST;
-const uiManageEmbed = process.env.OPENPENCIL_UI_MANAGE === "1";
 const automationRoute = localAutomationRoute(host);
 
 /**
@@ -77,10 +71,9 @@ function openPencilAssets(): Plugin {
   };
 }
 
-export default defineConfig(async ({ command, mode }) => {
+export default defineConfig(async ({ mode }) => {
   const metrics = mode === "metrics";
   const env = loadEnv(mode, __dirname, "VITE_");
-  const automation = !metrics && !uiManageEmbed;
 
   return {
     resolve: {
@@ -95,23 +88,16 @@ export default defineConfig(async ({ command, mode }) => {
     },
     define: {
       __OPENPENCIL_APP_VERSION__: JSON.stringify(packageJson.version),
-      ...(uiManageEmbed
-        ? { __OPENPENCIL_DONATION_URL__: "null" }
-        : donationDefine(__dirname)),
-      __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(
-        automation ? localAutomationToken(command) : null
-      ),
+      __OPENPENCIL_DONATION_URL__: "null",
+      __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(null),
       __OPENPENCIL_LOCAL_AUTOMATION_URL__: JSON.stringify(
         automationRoute.browserURL
       ),
       __OPENPENCIL_LOCAL_AUTOMATION_HTTP_URL__: JSON.stringify(
         automationRoute.browserURL.replace(/^ws/, "http")
       ),
-      "import.meta.env.VITE_OPENPENCIL_UI_MANAGE": JSON.stringify(
-        uiManageEmbed ? "1" : ""
-      ),
       "import.meta.env.VITE_OPENPENCIL_FEEDBACK": JSON.stringify(
-        uiManageEmbed ? "" : env.VITE_OPENPENCIL_FEEDBACK ?? ""
+        env.VITE_OPENPENCIL_FEEDBACK ?? ""
       ),
     },
     // npm CJS leaves under bun `.bun` need force-prebundle; do not prebundle `@open-pencil/*`.
@@ -153,7 +139,6 @@ export default defineConfig(async ({ command, mode }) => {
           IconsResolver({ prefix: "icon", customCollections: ["ai"] }),
         ],
       }),
-      automation ? openPencilAutomationPlugin(command, host) : undefined,
       vue(),
       metrics
         ? metricsBrandPlugin((outDir) => resolve(outDir, ".."))
@@ -178,21 +163,17 @@ export default defineConfig(async ({ command, mode }) => {
       ...createDevServerOptions(host, __dirname),
       host: true,
       allowedHosts: ["hpghycxjvirg.sealosgzg.site"],
-      ...(uiManageEmbed
-        ? {
-            strictPort: true,
-            proxy: {
-              "/api": {
-                target: "http://127.0.0.1:3001",
-                changeOrigin: true,
-              },
-              "/mcp": {
-                target: "http://127.0.0.1:3001",
-                changeOrigin: true,
-              },
-            },
-          }
-        : {}),
+      strictPort: true,
+      proxy: {
+        "/api": {
+          target: "http://127.0.0.1:3001",
+          changeOrigin: true,
+        },
+        "/mcp": {
+          target: "http://127.0.0.1:3001",
+          changeOrigin: true,
+        },
+      },
     },
   };
 });

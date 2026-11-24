@@ -32,24 +32,24 @@ export function takeDocParams(args: Record<string, unknown>): {
   docName: string;
   toolArgs: Record<string, unknown>;
 } {
-  const docId = typeof args.docId === "string" ? args.docId.trim() : "";
-  const docName = typeof args.docName === "string" ? args.docName.trim() : "";
+  const docId = typeof args.doc_id === "string" ? args.doc_id.trim() : "";
+  const docName = typeof args.doc_name === "string" ? args.doc_name.trim() : "";
   if (!docId || !docName) {
-    throw new HttpError(400, "缺少 docId 或 docName");
+    throw new HttpError(400, "缺少 doc_id 或 doc_name");
   }
   if (!UUID_RE.test(docId)) {
-    throw new HttpError(400, "docId 必须是 UUID");
+    throw new HttpError(400, "doc_id 必须是 UUID");
   }
   if (docName.length > 120) {
-    throw new HttpError(400, "docName 不能超过 120 个字符");
+    throw new HttpError(400, "doc_name 不能超过 120 个字符");
   }
   const toolArgs = { ...args };
-  delete toolArgs.docId;
-  delete toolArgs.docName;
+  delete toolArgs.doc_id;
+  delete toolArgs.doc_name;
   return { docId, docName, toolArgs };
 }
 
-/** 按访问令牌账号定位设计稿；不存在则用 docId、docName 创建。 */
+/** 按访问令牌账号定位设计稿；不存在则用 doc_id、doc_name 创建。 */
 export async function resolveMcpDesign(
   user: AuthUser,
   docId: string,

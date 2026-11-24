@@ -9,6 +9,7 @@ import { setActiveEditorStore } from '@/app/editor/active-store'
 import { focusNodesByName } from '@/app/editor/selection/focus'
 import { useUiManageAuth } from '@/app/integrations/ui-manage/auth'
 import { bootUiManageBridgeFromRoute } from '@/app/integrations/ui-manage/bridge'
+import { isUiManageEmbed } from '@/app/integrations/ui-manage/mode'
 import {
   bootSharePreview,
   markSharePreview,
@@ -37,7 +38,6 @@ import { IS_BROWSER } from '@/constants'
 
 const props = defineProps<{ id?: string; token?: string }>()
 const route = useRoute()
-const uiManageEmbed = import.meta.env.VITE_OPENPENCIL_UI_MANAGE === '1'
 const isShareRoute = computed(
   () => route.name === 'ui-manage-share' || Boolean(props.token)
 )
@@ -53,10 +53,10 @@ watch(
   }
 )
 const router = useRouter()
-const pinHome = !appRuntimeConfig.test && !uiManageEmbed
+const pinHome = !appRuntimeConfig.test && !isUiManageEmbed
 const showHomeFirst = route.path === '/' && pinHome
 watch(
-  () => !appRuntimeConfig.test && !uiManageEmbed,
+  () => !appRuntimeConfig.test && !isUiManageEmbed,
   (pins) => {
     if (pins) ensureHomeTab()
   }
@@ -69,7 +69,7 @@ function openFirstTab(): Tab {
 
 {
   // Before the canvas mounts, so share does not open an editor canvas and throw its fonts away.
-  if (uiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
+  if (isUiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
     markSharePreview()
   }
   // Need a store before useKeyboard; ui-manage bridge reuses this blank tab.
@@ -102,7 +102,7 @@ async function selectNodeByName(name: string): Promise<boolean> {
 }
 
 onMounted(async () => {
-  if (uiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
+  if (isUiManageEmbed && (props.token || route.name === 'ui-manage-share')) {
     const token =
       props.token ||
       (typeof route.params.token === 'string' ? route.params.token : '')
@@ -116,7 +116,7 @@ onMounted(async () => {
   }
 
   // ui-manage: open/save only via `/api/designs/:id/content` (login required).
-  if (uiManageEmbed && props.id) {
+  if (isUiManageEmbed && props.id) {
     const auth = useUiManageAuth()
     if (!(await auth.ensureSession())) {
       await router.replace({ path: '/login', query: { redirect: route.fullPath } })
@@ -167,7 +167,7 @@ onUnmounted(() => {
       <CommandPalette />
     </template>
     <!-- ui-manage opens one design; the name and the way back live in the left header. -->
-    <TabBar v-if="!uiManageEmbed && !isShareRoute" />
+    <TabBar v-if="!isUiManageEmbed && !isShareRoute" />
     <EditorWorkspace
       v-if="shown && shown.tab.kind === 'document'"
       :key="shown.key"

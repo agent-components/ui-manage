@@ -9,7 +9,7 @@
 - Prisma（`prisma/`，schema `ui_manage`）
 - 登录复用 `harness.public.users`（Bearer token）
 - `.fig` 内容存 MinIO（S3 兼容）
-- MCP：设置 `MCP_ENABLE=1` 后才有 `POST /mcp`（Streamable HTTP）。Bearer 登录令牌。画稿工具在 JSON 参数里带 `docId`、`docName`、`page_id` 或 `parent_id`
+- MCP：设置 `MCP_ENABLE=1` 后才有 `POST /mcp`（Streamable HTTP）。Bearer 登录令牌。画稿工具在 JSON 参数里带 `doc_id`、`doc_name`、`page_id` 或 `parent_id`
 
 ## 本地开发
 
@@ -34,7 +34,7 @@ pnpm dev
 
 ## 访问令牌与 MCP
 
-- 画稿接口 `POST /api/openapi/<工具名>`，请求体是工具参数，并带 `docId`、`docName`
+- 画稿接口 `POST /api/openapi/<工具名>`，请求体是工具参数，并带 `doc_id`、`doc_name`
 - 设计稿不存在时按这两个参数创建；画稿工具写回 MinIO 中的 `.fig`
 - `MCP_ENABLE=1` 时额外提供 `POST /mcp`。请求头 `Authorization: Bearer <登录令牌>`。`tools/call` 的参数和 HTTP 一致
 - 读页面传 `page_id`，新建图层传 `parent_id`。服务不记住当前页，也没有切换页面的工具

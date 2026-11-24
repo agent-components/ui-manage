@@ -100,7 +100,7 @@ async function handleMethod(
       capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "设计稿", version: "1.0.0" },
       instructions:
-        "画稿工具的参数里要带 docId（UUID）和 docName。稿不存在时按这两个参数创建。列表、创建、重命名、删除设计文件不需要这两个参数。没有当前页：读某一页传 page_id，新建图层传 parent_id。",
+        "画稿工具的参数里要带 doc_id（UUID）和 doc_name。稿不存在时按这两个参数创建。列表、创建、重命名、删除设计文件不需要这两个参数。没有当前页：读某一页传 page_id，新建图层传 parent_id。",
     });
   }
 

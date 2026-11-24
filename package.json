@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm dev:api\" \"pnpm dev:web\"",
     "dev:api": "pnpm --filter @ui-manage/server dev",
-    "dev:web": "cd vendor/open-pencil && OPENPENCIL_UI_MANAGE=1 npx vite --host 0.0.0.0 --port 5173 --strictPort",
+    "dev:web": "cd vendor/open-pencil && npx vite --host 0.0.0.0 --port 5173 --strictPort",
     "editor:install": "cd vendor/open-pencil && bun install",
     "build": "pnpm --filter @ui-manage/server build",
     "pack": "bash scripts/pack.sh",

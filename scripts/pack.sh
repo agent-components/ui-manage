@@ -23,7 +23,6 @@ fi
 echo "==> 构建前端"
 (
   cd vendor/open-pencil
-  export OPENPENCIL_UI_MANAGE=1
   ./node_modules/.bin/vite build
 )
 

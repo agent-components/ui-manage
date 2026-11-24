@@ -28,5 +28,5 @@ pnpm dev          # api=trpc:3001 + web=vite:5173
 ## 安装与跑 Vite
 
 - 安装：`bun install`（根脚本 `pnpm editor:install`）；`postinstall` 会把 `@open-pencil/canvaskit` 的 `canvaskit.wasm` 拷到 `public/`（默认 locator 是 `/canvaskit.wasm`）
-- 开发：`OPENPENCIL_UI_MANAGE=1 npx vite`（勿用 `bunx --bun vite`）
+- 开发：`npx vite`（勿用 `bunx --bun vite`）
 - 画布空白但图层面板有图层：多半是 CanvasKit JS/wasm 未配对或 `/canvaskit.wasm` 被 SPA 回成 HTML；硬刷新后再试
