@@ -1,13 +1,7 @@
 import { requireUser, type AuthUser } from "../auth/session";
-import { isDesignEntityTool, runDesignEntityTool } from "./entities";
-import {
-  listHarnessTools,
-  resolveDesignForOpenApi,
-  runOpenApiTool,
-} from "./catalog";
-import { fillBoundParams, omitBoundParams } from "./bound";
-import { takeDocParams } from "./design";
-import { exportPngToolResponse, isExportPngTool } from "./png";
+import { isPngTool, listHarnessTools } from "./definitions";
+import { runTool } from "./execution";
+import { exportPngToolResponse } from "./execution/png";
 
 const PROTOCOL_VERSION = "2025-03-26";
 
@@ -38,19 +32,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function protocolTools(headers: Headers) {
-  return omitBoundParams(listHarnessTools(), headers).map((tool) => ({
+function protocolTools() {
+  return listHarnessTools().map((tool) => ({
     name: tool.name,
-    description: tool.description ?? "",
-    inputSchema: tool.inputSchema ?? {
-      type: "object",
-      properties: {},
-    },
+    description: tool.description,
+    inputSchema: tool.inputSchema,
   }));
 }
 
 function toolContent(name: string, result: unknown) {
-  if (isExportPngTool(name)) {
+  if (isPngTool(name)) {
     const body = exportPngToolResponse(
       result as Parameters<typeof exportPngToolResponse>[0]
     );
@@ -71,32 +62,15 @@ async function callTool(
   user: AuthUser,
   name: string,
   args: Record<string, unknown>,
-  origin: string,
-  headers: Headers
+  origin: string
 ): Promise<unknown> {
-  const schema = listHarnessTools().find(
-    (tool) => tool.name === name
-  )?.inputSchema;
-  const filled = fillBoundParams(args, headers, schema);
-  if (isDesignEntityTool(name)) {
-    return runDesignEntityTool(name, filled, user);
-  }
-  const { docId, docName, toolArgs } = takeDocParams(filled);
-  const design = await resolveDesignForOpenApi(user, docId, docName);
-  return runOpenApiTool({
-    name,
-    args: toolArgs,
-    user,
-    design,
-    origin,
-  });
+  return runTool(name, args, { user, origin });
 }
 
 async function handleMethod(
   message: RpcMessage,
   user: AuthUser,
-  origin: string,
-  headers: Headers
+  origin: string
 ): Promise<unknown | undefined> {
   const method = typeof message.method === "string" ? message.method : "";
   const hasId = Object.prototype.hasOwnProperty.call(message, "id");
@@ -135,7 +109,7 @@ async function handleMethod(
   }
 
   if (method === "tools/list") {
-    return rpcResult(id, { tools: protocolTools(headers) });
+    return rpcResult(id, { tools: protocolTools() });
   }
 
   if (method === "tools/call") {
@@ -144,7 +118,7 @@ async function handleMethod(
     if (!name) return rpcError(id, -32602, "缺少工具名");
     const args = isRecord(params?.arguments) ? params.arguments : {};
     try {
-      const result = await callTool(user, name, args, origin, headers);
+      const result = await callTool(user, name, args, origin);
       return rpcResult(id, toolContent(name, result));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "工具执行失败";
@@ -200,7 +174,7 @@ export async function handleMcp(
         responses.push(rpcError(null, -32600, "Invalid Request"));
         continue;
       }
-      const response = await handleMethod(item, user, origin, request.headers);
+      const response = await handleMethod(item, user, origin);
       if (response !== undefined) responses.push(response);
     }
     if (responses.length === 0) return new Response(null, { status: 202 });
@@ -213,7 +187,7 @@ export async function handleMcp(
     });
   }
 
-  const response = await handleMethod(parsed, user, origin, request.headers);
+  const response = await handleMethod(parsed, user, origin);
   if (response === undefined) return new Response(null, { status: 202 });
   return Response.json(response);
 }

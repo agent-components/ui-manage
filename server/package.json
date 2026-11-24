@@ -10,7 +10,7 @@
     "dev": "tsx watch --clear-screen=false index.ts",
     "start": "tsx index.ts",
     "preview": "NODE_ENV=production PORT=3000 tsx index.ts",
-    "build": "tsc --noEmit --pretty false --strict --module esnext --moduleResolution bundler --target esnext --skipLibCheck --esModuleInterop --typeRoots ../vendor/open-pencil/node_modules/@types index.ts"
+    "build": "tsc --noEmit --pretty false --strict --module esnext --moduleResolution bundler --target esnext --skipLibCheck --esModuleInterop --resolveJsonModule --typeRoots ../vendor/open-pencil/node_modules/@types index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",

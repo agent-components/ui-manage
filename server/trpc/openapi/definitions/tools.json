@@ -1,0 +1,2224 @@
+[
+  {
+    "name": "list_designs",
+    "description": "列出当前账号下的全部设计文件，按更新时间倒序。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_design",
+    "description": "创建一条空的设计文件，返回新建记录。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "设计文件名称。省略时为「未命名设计稿」。"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "update_design",
+    "description": "重命名设计文件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计文件 ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "新名称"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "delete_design",
+    "description": "删除设计文件及其对象存储内容。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计文件 ID"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_page_tree",
+    "description": "读取一个页面或一个节点的层级，只含 id、type、name、尺寸，文本节点带文字。要看某个节点的完整属性用 get_node。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "depth": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Max nesting depth to return (1 = returned root nodes only). Default: unlimited"
+        },
+        "root_id": {
+          "type": "string",
+          "description": "Return only this node subtree instead of the whole current page"
+        },
+        "node_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Keep only these node types and their ancestors, for example FRAME or TEXT"
+        },
+        "page_id": {
+          "type": "string",
+          "description": "页面节点 ID。不传 root_id 时必填。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "get_node",
+    "description": "读取一个节点的详细属性。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "depth": {
+          "type": "number",
+          "description": "Max depth of children to include (0 = no children). Default: unlimited"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "find_nodes",
+    "description": "在指定页面里按名称和类型查找节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name substring to match (case-insensitive)"
+        },
+        "type": {
+          "enum": [
+            "FRAME",
+            "RECTANGLE",
+            "ELLIPSE",
+            "TEXT",
+            "LINE",
+            "STAR",
+            "POLYGON",
+            "SECTION",
+            "GROUP",
+            "COMPONENT",
+            "INSTANCE",
+            "VECTOR"
+          ],
+          "type": "string",
+          "description": "Node type filter"
+        },
+        "page_id": {
+          "type": "string",
+          "description": "页面节点 ID。服务不记住当前页，每次调用都要带上。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "page_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "get_jsx",
+    "description": "把一个节点及其子节点导出成 JSX，和 render 用同一套语法，改完可以再渲染回画布。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "path": {
+          "type": "string",
+          "description": "Write JSX to this path instead of returning it (requires OPENPENCIL_MCP_ROOT)"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "describe",
+    "description": "给出一个或多个节点的语义化描述，用来在看不到画稿时理解它是什么。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID (single node)"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Node IDs (multiple nodes in one call)"
+        },
+        "depth": {
+          "type": "number",
+          "description": "Override depth (auto if omitted, max: 5)"
+        },
+        "grid": {
+          "type": "number",
+          "description": "Grid size for alignment checks (default: 8)"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "list_pages",
+    "description": "列出设计稿里的全部页面，返回每页的 id 和 name。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_children",
+    "description": "读取一个节点的直接子节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_tree",
+    "description": "读取一个节点及其下级的树状结构。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "depth": {
+          "type": "number",
+          "description": "Max depth (default: unlimited)"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_ancestors",
+    "description": "从节点往上一直列到页面根节点的祖先链。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "depth": {
+          "type": "number",
+          "description": "Max depth to traverse"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_bounds",
+    "description": "读取一个节点的绝对包围盒。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "page_bounds",
+    "description": "计算指定页面上全部顶层对象的包围盒。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "page_id": {
+          "type": "string",
+          "description": "页面节点 ID。服务不记住当前页，每次调用都要带上。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "page_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_shape",
+    "description": "在画布上新建一个图形。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "FRAME",
+            "RECTANGLE",
+            "ELLIPSE",
+            "TEXT",
+            "LINE",
+            "STAR",
+            "POLYGON",
+            "SECTION"
+          ],
+          "type": "string",
+          "description": "节点类型。FRAME 作容器和卡片，RECTANGLE 作实心块，ELLIPSE 作圆，TEXT 作文字，LINE 作分隔线，STAR 作星形和徽标，POLYGON 作三角形和正多边形，SECTION 作页面分区。任意形状用 create_vector 加 SVG path。"
+        },
+        "x": {
+          "type": "number",
+          "description": "X position in the parent, or on the page"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position in the parent, or on the page"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Width in pixels"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Height in pixels"
+        },
+        "name": {
+          "type": "string",
+          "description": "Node name shown in layers panel"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "type",
+        "x",
+        "y",
+        "width",
+        "height",
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "render",
+    "description": "把 JSX 渲染成设计节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "replace_id": {
+          "type": "string",
+          "description": "Node ID to replace — new node takes its position in parent, old node is deleted"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "insert_index": {
+          "type": "number",
+          "description": "Position among siblings (0 = first child). Omit to append at end."
+        },
+        "x": {
+          "type": "number",
+          "description": "X position of the root node"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position of the root node"
+        },
+        "jsx": {
+          "type": "string",
+          "description": "要渲染的 JSX。自己画的形状写成一个图层，例如 <Vector d=\"M2 12 L22 12\" stroke=\"#000\" />，样式和普通图层一样；内嵌 <svg> 适合放从别处拷来的图形，只画它的形状，不含文字。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "jsx",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_page",
+    "description": "新建一个页面。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Page name"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "name",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_vector",
+    "description": "用 SVG path 数据或 VectorNetwork 新建一个矢量节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X position in the parent, or on the page"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position in the parent, or on the page"
+        },
+        "name": {
+          "type": "string",
+          "description": "Node name"
+        },
+        "path": {
+          "type": "string",
+          "description": "SVG path data (preferred, e.g. \"M0 0 L100 0 L50 80 Z\") or VectorNetwork JSON, e.g. {\"vertices\":[{\"x\":0,\"y\":0},{\"x\":10,\"y\":0}],\"segments\":[{\"start\":0,\"end\":1}],\"regions\":[]}"
+        },
+        "fill": {
+          "type": "string",
+          "description": "Fill color (hex)"
+        },
+        "stroke": {
+          "type": "string",
+          "description": "Stroke color (hex)"
+        },
+        "stroke_weight": {
+          "type": "number",
+          "description": "Stroke weight"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "import_svg",
+    "description": "把 SVG 源码导入画布，转成可编辑的图层。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "svg": {
+          "type": "string",
+          "description": "SVG markup string (e.g. '<svg viewBox=\"0 0 24 24\"><path d=\"M...\"/></svg>')"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name for the created frame or group (default: the root <svg> id, else \"Frame\" or \"Group\")"
+        },
+        "color": {
+          "type": "string",
+          "description": "Default color for currentColor fills/strokes (default: #000000)"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "x": {
+          "type": "number",
+          "description": "X position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "svg",
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_component",
+    "description": "把一个 frame 或 group 转成组件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID to convert"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_instance",
+    "description": "按组件创建实例。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "component_id": {
+          "type": "string",
+          "description": "Component node ID"
+        },
+        "x": {
+          "type": "number",
+          "description": "X position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "component_id",
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_to_component",
+    "description": "把一个或多个 frame、group 转成组件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Node IDs to convert"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "ids",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "search_icons",
+    "description": "按关键字在 Iconify 里搜索图标，结果按关键字分组返回。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "queries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Search keywords (e.g. [\"heart\", \"arrow\", \"settings\"])"
+        },
+        "limit": {
+          "type": "number",
+          "description": "Max results per query (default: 5)"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Filter by icon set prefix (e.g. \"lucide\", \"mdi\")"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "queries",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "insert_icon",
+    "description": "把一个或多个矢量图标插入画布，图标已缓存时不发网络请求。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Icon names as prefix:name (e.g. [\"lucide:heart\"] or [\"lucide:heart\",\"lucide:home\",\"lucide:star\"])"
+        },
+        "name": {
+          "type": "string",
+          "description": "Single icon name (shorthand for names with one icon)"
+        },
+        "size": {
+          "type": "number",
+          "description": "Icon size in pixels (default: 24)"
+        },
+        "color": {
+          "type": "string",
+          "description": "Icon color hex (replaces currentColor). Default: #000000"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "update_node",
+    "description": "修改节点的常规属性（位置、尺寸、不透明度、圆角、可见性、文字、字体）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "x": {
+          "type": "number",
+          "description": "X position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Width"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Height"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity (0-1)"
+        },
+        "corner_radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Corner radius"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Visibility"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text content (TEXT nodes)"
+        },
+        "text_direction": {
+          "enum": [
+            "AUTO",
+            "LTR",
+            "RTL"
+          ],
+          "type": "string",
+          "description": "Text direction for TEXT nodes"
+        },
+        "flow_direction": {
+          "enum": [
+            "AUTO",
+            "LTR",
+            "RTL"
+          ],
+          "type": "string",
+          "description": "Auto-layout flow direction for FRAME nodes"
+        },
+        "font_size": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Font size"
+        },
+        "font_weight": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 900,
+          "description": "Font weight (100-900)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Layer name"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "batch_update",
+    "description": "一次调用批量修改多个节点（间距、内边距、对齐、尺寸、伸缩、名称、可见性、圆角、不透明度、自动调整与方向）。只要有一条指向不存在的节点或用了无效属性，就全部不生效。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operations": {
+          "type": "string",
+          "description": "JSON array: [{\"id\":\"0:5\",\"props\":{\"spacing\":8}},{\"id\":\"0:6\",\"props\":{\"sizing_horizontal\":\"FILL\",\"grow\":1}}]"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "operations",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_fill",
+    "description": "设置节点的填充。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color (hex). For gradient: start color."
+        },
+        "color_end": {
+          "type": "string",
+          "description": "End color for gradient (if omitted, solid fill)"
+        },
+        "gradient": {
+          "enum": [
+            "top-bottom",
+            "bottom-top",
+            "left-right",
+            "right-left"
+          ],
+          "type": "string",
+          "description": "Gradient direction"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "color",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_image_fill",
+    "description": "用 base64 图片数据给节点设置图片填充。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "image_data": {
+          "type": "string",
+          "description": "Base64-encoded image bytes (PNG, JPEG, or WEBP)"
+        },
+        "scale_mode": {
+          "enum": [
+            "FILL",
+            "FIT",
+            "CROP",
+            "TILE"
+          ],
+          "type": "string",
+          "description": "Image scale mode",
+          "default": "FILL"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "image_data",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_stroke",
+    "description": "设置节点的描边。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Stroke color (hex)"
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0.1,
+          "description": "Stroke weight",
+          "default": 1
+        },
+        "align": {
+          "enum": [
+            "INSIDE",
+            "CENTER",
+            "OUTSIDE"
+          ],
+          "type": "string",
+          "description": "Stroke alignment",
+          "default": "INSIDE"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "color",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_effects",
+    "description": "设置节点的效果（投影、内阴影、模糊）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "type": {
+          "enum": [
+            "DROP_SHADOW",
+            "INNER_SHADOW",
+            "FOREGROUND_BLUR",
+            "BACKGROUND_BLUR"
+          ],
+          "type": "string",
+          "description": "Effect type"
+        },
+        "color": {
+          "type": "string",
+          "description": "Shadow color (hex). Ignored for blur."
+        },
+        "offset_x": {
+          "type": "number",
+          "description": "Shadow X offset",
+          "default": 0
+        },
+        "offset_y": {
+          "type": "number",
+          "description": "Shadow Y offset",
+          "default": 4
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Blur radius",
+          "default": 4
+        },
+        "spread": {
+          "type": "number",
+          "description": "Shadow spread",
+          "default": 0
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_layout",
+    "description": "给 frame 设置自动布局（方向、对齐、间距、内边距）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Frame node ID"
+        },
+        "direction": {
+          "enum": [
+            "HORIZONTAL",
+            "VERTICAL"
+          ],
+          "type": "string",
+          "description": "Layout direction (keeps current if omitted)"
+        },
+        "spacing": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Gap between items (only changes if provided)"
+        },
+        "padding": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Equal padding on all sides (only changes if provided)"
+        },
+        "padding_horizontal": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Horizontal padding"
+        },
+        "padding_vertical": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Vertical padding"
+        },
+        "align": {
+          "enum": [
+            "MIN",
+            "CENTER",
+            "MAX",
+            "SPACE_BETWEEN"
+          ],
+          "type": "string",
+          "description": "Primary axis alignment (only changes if provided)"
+        },
+        "counter_align": {
+          "enum": [
+            "MIN",
+            "CENTER",
+            "MAX",
+            "STRETCH"
+          ],
+          "type": "string",
+          "description": "Cross axis alignment (only changes if provided)"
+        },
+        "flow_direction": {
+          "enum": [
+            "AUTO",
+            "LTR",
+            "RTL"
+          ],
+          "type": "string",
+          "description": "Child flow direction for auto-layout. AUTO inherits from parent."
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_layout_child",
+    "description": "设置自动布局子项的伸缩方式、对齐与绝对定位。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Child node ID"
+        },
+        "sizing_horizontal": {
+          "enum": [
+            "FIXED",
+            "HUG",
+            "FILL"
+          ],
+          "type": "string",
+          "description": "Horizontal sizing mode"
+        },
+        "sizing_vertical": {
+          "enum": [
+            "FIXED",
+            "HUG",
+            "FILL"
+          ],
+          "type": "string",
+          "description": "Vertical sizing mode"
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Flex grow factor (0 = fixed, 1 = grow)"
+        },
+        "align_self": {
+          "enum": [
+            "INHERIT",
+            "MIN",
+            "CENTER",
+            "MAX",
+            "STRETCH",
+            "BASELINE"
+          ],
+          "type": "string",
+          "description": "Self alignment override (cross-axis)"
+        },
+        "positioning": {
+          "enum": [
+            "AUTO",
+            "ABSOLUTE"
+          ],
+          "type": "string",
+          "description": "ABSOLUTE to take node out of auto-layout flow"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_radius",
+    "description": "设置节点圆角。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Corner radius for all corners"
+        },
+        "top_left": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Top-left radius"
+        },
+        "top_right": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Top-right radius"
+        },
+        "bottom_right": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Bottom-right radius"
+        },
+        "bottom_left": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Bottom-left radius"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_opacity",
+    "description": "设置节点的不透明度。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity (0-1)"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "value",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_rotation",
+    "description": "设置节点的旋转角度。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Rotation angle in degrees"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "angle",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_visible",
+    "description": "设置节点是否可见。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "value": {
+          "type": "boolean",
+          "description": "Visible (true/false)"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "value",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_constraints",
+    "description": "设置节点在父容器里的缩放约束。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "horizontal": {
+          "enum": [
+            "MIN",
+            "CENTER",
+            "MAX",
+            "STRETCH",
+            "SCALE"
+          ],
+          "type": "string",
+          "description": "Horizontal constraint"
+        },
+        "vertical": {
+          "enum": [
+            "MIN",
+            "CENTER",
+            "MAX",
+            "STRETCH",
+            "SCALE"
+          ],
+          "type": "string",
+          "description": "Vertical constraint"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_minmax",
+    "description": "设置节点的最小、最大宽高。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "min_width": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum width"
+        },
+        "max_width": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum width"
+        },
+        "min_height": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum height"
+        },
+        "max_height": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum height"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_text",
+    "description": "设置文本节点的文字内容。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text content"
+        },
+        "markdown": {
+          "type": "boolean",
+          "description": "把 text 当 Markdown 读：# 和 ## 标题、**粗体**、*斜体*、~~删除线~~、`code`、[链接](url)、列表、> 引用会变成带样式的段落，套在文本自身样式上。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_text_properties",
+    "description": "设置文本的排版属性（对齐、自动调整、大小写、装饰、截断）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Text node ID"
+        },
+        "align_horizontal": {
+          "enum": [
+            "LEFT",
+            "CENTER",
+            "RIGHT",
+            "JUSTIFIED"
+          ],
+          "type": "string",
+          "description": "Horizontal text alignment"
+        },
+        "align_vertical": {
+          "enum": [
+            "TOP",
+            "CENTER",
+            "BOTTOM"
+          ],
+          "type": "string",
+          "description": "Vertical text alignment"
+        },
+        "auto_resize": {
+          "enum": [
+            "NONE",
+            "WIDTH_AND_HEIGHT",
+            "HEIGHT",
+            "TRUNCATE"
+          ],
+          "type": "string",
+          "description": "Text auto-resize mode"
+        },
+        "direction": {
+          "enum": [
+            "AUTO",
+            "LTR",
+            "RTL"
+          ],
+          "type": "string",
+          "description": "Text direction"
+        },
+        "text_decoration": {
+          "enum": [
+            "NONE",
+            "UNDERLINE",
+            "STRIKETHROUGH"
+          ],
+          "type": "string",
+          "description": "Text decoration"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "set_font",
+    "description": "设置文本节点的字体。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "family": {
+          "type": "string",
+          "description": "Font family name"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Font size"
+        },
+        "style": {
+          "type": "string",
+          "description": "Font style (e.g. \"Bold\", \"Regular\", \"Bold Italic\")"
+        },
+        "variations": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          },
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Variable font axis values by OpenType tag (e.g. {\"wght\": 550, \"wdth\": 75}); axes left out keep the style's values. Without a style, the nearest named style is picked."
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_resize",
+    "description": "调整节点的宽高。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Width"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Height"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "width",
+        "height",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "node_move",
+    "description": "把节点移动到新的坐标。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "x": {
+          "type": "number",
+          "description": "X position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "x",
+        "y",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "delete_node",
+    "description": "删除节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID to delete"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "clone_node",
+    "description": "复制节点。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID to clone"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "rename_node",
+    "description": "给节点改名。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "New name"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "reparent_node",
+    "description": "把节点移到另一个父节点下。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node ID to move"
+        },
+        "parent_id": {
+          "type": "string",
+          "description": "New parent node ID"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "parent_id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "group_nodes",
+    "description": "把多个节点编成一个组。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "Node IDs to group"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "ids",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "ungroup_node",
+    "description": "拆散一个编组。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Group node ID"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "id",
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "export_svg",
+    "description": "把节点导出成 SVG 字符串。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "要导出的节点 ID。不传则必须同时传 page_id，导出该页全部顶层节点。"
+        },
+        "path": {
+          "type": "string",
+          "description": "Write exported data to this path instead of returning it (requires OPENPENCIL_MCP_ROOT)"
+        },
+        "page_id": {
+          "type": "string",
+          "description": "页面节点 ID。不传 ids 时必填，导出该页全部顶层节点。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "export_png",
+    "description": "把节点导出成 PNG，用来肉眼核对画稿。图片在 image 内容里返回，文字里是宽、高、缩放和字节数。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "要导出的节点 ID。不传则必须同时传 page_id，导出该页全部顶层节点。"
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 4,
+          "description": "导出倍率，会先按这个放大，再受 maxEdge 限制。默认 1。",
+          "default": 1
+        },
+        "maxEdge": {
+          "type": "number",
+          "minimum": 64,
+          "maximum": 4096,
+          "description": "输出宽或高的像素上限。保持比例，且不会比原图更大。默认 1280。",
+          "default": 1280
+        },
+        "page_id": {
+          "type": "string",
+          "description": "页面节点 ID。不传 ids 时必填，导出该页全部顶层节点。服务不记住当前页。"
+        },
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "required": [
+        "docId",
+        "docName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "create_share_link",
+    "description": "为当前设计稿创建只读分享链接。已经有链接时直接返回那一条，不会再创建新的。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "docId",
+        "docName"
+      ]
+    }
+  },
+  {
+    "name": "get_share_link",
+    "description": "查看当前设计稿的只读分享链接。还没有链接时不会创建，enabled 为 false。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "docId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。"
+        },
+        "docName": {
+          "type": "string",
+          "description": "设计稿名称。稿不存在时用于创建。"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "docId",
+        "docName"
+      ]
+    }
+  }
+]

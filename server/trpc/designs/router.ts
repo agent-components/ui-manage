@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { decodeUtf8Header } from "../openapi/design";
+import { decodeUtf8Header } from "../openapi/execution/target";
 import { prisma } from "../db";
 import { designObjectKey, deleteDesignObject } from "../storage";
 import {

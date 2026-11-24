@@ -1,10 +1,10 @@
 import { FigmaAPI } from "@open-pencil/core/figma-api";
 import { exportFigFile, parseFigFile } from "@open-pencil/core/io/formats/fig";
 import { SceneGraph } from "@open-pencil/scene-graph";
-import type { McpDesign } from "./design";
+import type { McpDesign } from "./target";
 import { acceptRequestedFont } from "./fonts";
-import { getDesignObject, putDesignObject } from "../storage";
-import { prisma } from "../db";
+import { getDesignObject, putDesignObject } from "../../storage";
+import { prisma } from "../../db";
 
 /** 同一设计稿复用内存里的画稿，避免每次都从对象存储解析。当前页不在请求之间保留。 */
 type DesignSession = {

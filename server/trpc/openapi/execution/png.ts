@@ -2,68 +2,24 @@ import type { ExportImageOptions, FigmaAPI } from "@open-pencil/core/figma-api";
 import { findPageId } from "@open-pencil/core/io";
 import { headlessRenderNodes } from "@open-pencil/core/io/formats/raster";
 import { exportImage, toolNumber } from "@open-pencil/core/tools";
-import { toJsonSchema } from "@valibot/to-json-schema";
 import * as v from "valibot";
+import { withMcpDocument } from "./document";
+import { ensureMcpFonts } from "./fonts";
+import { prepareScope } from "./scope";
+import type { McpDesign } from "./target";
 
-export const EXPORT_PNG_TOOL = "export_png";
-
+/** export_png 的参数。说明写在 ../definitions/png.ts，这里只管校验。 */
 const exportPngInput = v.strictObject({
-  ids: v.optional(
-    v.pipe(
-      v.array(v.string()),
-      v.minLength(1),
-      v.description(
-        "要导出的节点 ID。不传则必须同时传 page_id，导出该页全部顶层节点。"
-      )
-    )
-  ),
+  ids: v.optional(v.pipe(v.array(v.string()), v.minLength(1))),
   scale: v.optional(
-    toolNumber(
-      v.pipe(
-        v.number(),
-        v.minValue(0.1),
-        v.maxValue(4),
-        v.description("导出倍率，会先按这个放大，再受 maxEdge 限制。默认 1。")
-      )
-    ),
+    toolNumber(v.pipe(v.number(), v.minValue(0.1), v.maxValue(4))),
     1
   ),
   maxEdge: v.optional(
-    toolNumber(
-      v.pipe(
-        v.number(),
-        v.minValue(64),
-        v.maxValue(4096),
-        v.description(
-          "输出宽或高的像素上限。保持比例，且不会比原图更大。默认 1280。"
-        )
-      )
-    ),
+    toolNumber(v.pipe(v.number(), v.minValue(64), v.maxValue(4096))),
     1280
   ),
 });
-
-function exportPngInputSchema(): Record<string, unknown> {
-  const schema = toJsonSchema(exportPngInput, {
-    errorMode: "ignore",
-    typeMode: "force" as "ignore",
-  }) as Record<string, unknown>;
-  return {
-    type: "object",
-    ...schema,
-  };
-}
-
-export const exportPngTool = {
-  name: EXPORT_PNG_TOOL,
-  description:
-    "把节点导出成 PNG，用来肉眼核对画稿。传 ids 导出这些节点；不传 ids 时必须传 page_id，导出该页全部顶层节点。图片在 image 内容里返回，文字里是宽、高、缩放和字节数。",
-  inputSchema: exportPngInputSchema(),
-} as const;
-
-export function isExportPngTool(name: string): boolean {
-  return name === EXPORT_PNG_TOOL;
-}
 
 /** 进程里只有一个 CanvasKit 渲染器，导出必须串行。 */
 let renderQueue: Promise<unknown> = Promise.resolve();
@@ -122,7 +78,7 @@ export async function runExportPng(
   const parsed = v.safeParse(exportPngInput, args);
   if (!parsed.success) {
     throw new Error(
-      `Invalid arguments for ${EXPORT_PNG_TOOL}:\n${v.summarize(parsed.issues)}`
+      `Invalid arguments for export_png:\n${v.summarize(parsed.issues)}`
     );
   }
   attachPngExport(figma);
@@ -140,6 +96,18 @@ export async function runExportPng(
     return { error: result.error };
   }
   return { error: "PNG export failed" };
+}
+
+/** 执行 export_png：切页、备字，再把指定节点渲染成 PNG。 */
+export async function runPngTool(
+  design: McpDesign,
+  args: Record<string, unknown>
+): Promise<PngPayload | { error: string }> {
+  return withMcpDocument(design, false, async (figma) => {
+    const prepared = await prepareScope(figma, "export_png", args);
+    await ensureMcpFonts();
+    return runExportPng(figma, prepared.args);
+  });
 }
 
 export function exportPngToolResponse(result: PngPayload | { error: string }) {

@@ -14,27 +14,10 @@ import {
   readLibraryObject,
   writeLibraryObject,
 } from "./trpc/libraries/objects";
-import {
-  isDesignEntityTool,
-  runDesignEntityTool,
-} from "./trpc/openapi/entities";
-import {
-  listHarnessTools,
-  resolveDesignForOpenApi,
-  runOpenApiTool,
-} from "./trpc/openapi/catalog";
-import { fillBoundParams, omitBoundParams } from "./trpc/openapi/bound";
-import { takeDocParams } from "./trpc/openapi/design";
+import { runTool } from "./trpc/openapi/execution";
 import { handleMcp, mcpEnabled } from "./trpc/openapi/mcp";
 import { appRouter } from "./trpc/router";
 import { readSharedContent } from "./trpc/share/content";
-
-const ALLOW = new Set([
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
-  "http://localhost:5173",
-  "http://localhost:5174",
-]);
 
 const HOP_HEADERS = new Set([
   "connection",
@@ -83,32 +66,6 @@ function fromError(error: unknown): Response {
   }
   console.error(error);
   return errorJson(500, "服务器错误");
-}
-
-function corsHeaders(origin: string): Headers {
-  const headers = new Headers();
-  if (!ALLOW.has(origin)) return headers;
-  headers.set("Access-Control-Allow-Origin", origin);
-  headers.set("Access-Control-Allow-Credentials", "true");
-  headers.set(
-    "Access-Control-Allow-Headers",
-    "Authorization, Content-Type, If-Match, If-None-Match, docId, docName, page_id, parent_id, x-doc-id, x-doc-name, x-page-id, x-parent-id"
-  );
-  headers.set("Access-Control-Expose-Headers", "ETag");
-  headers.set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-  return headers;
-}
-
-function applyCors(response: Response, origin: string): Response {
-  const extra = corsHeaders(origin);
-  if (!extra.has("Access-Control-Allow-Origin")) return response;
-  const headers = new Headers(response.headers);
-  extra.forEach((value, key) => headers.set(key, value));
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 }
 
 async function readBody(req: IncomingMessage): Promise<Uint8Array> {
@@ -191,9 +148,7 @@ async function handleApi(request: Request): Promise<Response | null> {
   if (pathname === "/api/harness/tools" && method === "GET") {
     const caller = appRouter.createCaller(await createContext(request));
     const listed = await caller.harness.tools();
-    return Response.json({
-      tools: omitBoundParams(listed.tools, request.headers),
-    });
+    return Response.json({ tools: listed.tools });
   }
 
   const designContent = pathname.match(/^\/api\/designs\/([^/]+)\/content$/);
@@ -266,21 +221,9 @@ async function handleApi(request: Request): Promise<Response | null> {
       }
     }
     try {
-      const schema = listHarnessTools().find(
-        (tool) => tool.name === name
-      )?.inputSchema;
-      args = fillBoundParams(args, request.headers, schema);
-      if (isDesignEntityTool(name)) {
-        return Response.json(await runDesignEntityTool(name, args, user));
-      }
-      const { docId, docName, toolArgs } = takeDocParams(args);
-      const design = await resolveDesignForOpenApi(user, docId, docName);
       return Response.json(
-        await runOpenApiTool({
-          name,
-          args: toolArgs,
+        await runTool(name, args, {
           user,
-          design,
           origin: requestOrigin(url, request.headers),
         })
       );
@@ -370,16 +313,6 @@ function staticResponse(pathname: string): Response {
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse) {
-  const origin =
-    typeof req.headers.origin === "string" ? req.headers.origin : "";
-  if (req.method === "OPTIONS" && ALLOW.has(origin)) {
-    const headers = corsHeaders(origin);
-    res.statusCode = 204;
-    headers.forEach((value, key) => res.setHeader(key, value));
-    res.end();
-    return;
-  }
-
   try {
     const method = req.method ?? "GET";
     const body =
@@ -388,14 +321,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         : await readBody(req);
     const request = toRequest(req, body);
     const api = await handleApi(request);
-    const response = applyCors(
-      api ?? staticResponse(new URL(request.url).pathname),
-      origin
-    );
+    const response = api ?? staticResponse(new URL(request.url).pathname);
     await writeResponse(res, response, method === "HEAD");
   } catch (error) {
-    const response = applyCors(fromError(error), origin);
-    await writeResponse(res, response, false);
+    await writeResponse(res, fromError(error), false);
   }
 }
 

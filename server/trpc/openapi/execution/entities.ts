@@ -1,27 +1,12 @@
-import { HttpError } from "../http-error";
 import { randomUUID } from "node:crypto";
-import type { AuthUser } from "../auth/session";
-import { decodeUtf8Header } from "./design";
-import { prisma } from "../db";
-import { deleteDesignObject, designObjectKey } from "../storage";
-
-type DesignEntityTool = {
-  name: string;
-  description?: string;
-  method: "POST";
-  path: string;
-  inputSchema?: Record<string, unknown>;
-  headers: [];
-};
+import { HttpError } from "../../http-error";
+import type { AuthUser } from "../../auth/session";
+import { prisma } from "../../db";
+import { deleteDesignObject, designObjectKey } from "../../storage";
+import { decodeUtf8Header } from "./target";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const emptyObjectSchema = {
-  type: "object",
-  properties: {},
-  additionalProperties: false,
-} as const;
 
 function designView(design: {
   id: string;
@@ -55,81 +40,7 @@ function requireId(args: Record<string, unknown>): string {
 }
 
 /** 设计文件实体：列表 + 创建 + 重命名 + 删除（无单条详情）。 */
-export const DESIGN_ENTITY_TOOLS: DesignEntityTool[] = [
-  {
-    name: "list_designs",
-    description: "列出当前账号下的全部设计文件，按更新时间倒序。",
-    method: "POST",
-    path: "/api/openapi/list_designs",
-    inputSchema: { ...emptyObjectSchema },
-    headers: [],
-  },
-  {
-    name: "create_design",
-    description: "创建一条空的设计文件，返回新建记录。",
-    method: "POST",
-    path: "/api/openapi/create_design",
-    inputSchema: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: "设计文件名称。省略时为「未命名设计稿」。",
-        },
-      },
-      additionalProperties: false,
-    },
-    headers: [],
-  },
-  {
-    name: "update_design",
-    description: "重命名设计文件。",
-    method: "POST",
-    path: "/api/openapi/update_design",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: {
-          type: "string",
-          format: "uuid",
-          description: "设计文件 ID",
-        },
-        name: {
-          type: "string",
-          description: "新名称",
-        },
-      },
-      required: ["id", "name"],
-      additionalProperties: false,
-    },
-    headers: [],
-  },
-  {
-    name: "delete_design",
-    description: "删除设计文件及其对象存储内容。",
-    method: "POST",
-    path: "/api/openapi/delete_design",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: {
-          type: "string",
-          format: "uuid",
-          description: "设计文件 ID",
-        },
-      },
-      required: ["id"],
-      additionalProperties: false,
-    },
-    headers: [],
-  },
-];
-
-export function isDesignEntityTool(name: string): boolean {
-  return DESIGN_ENTITY_TOOLS.some((tool) => tool.name === name);
-}
-
-export async function runDesignEntityTool(
+export async function runDesignTool(
   name: string,
   args: Record<string, unknown>,
   user: AuthUser

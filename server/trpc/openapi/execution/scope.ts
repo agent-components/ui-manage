@@ -3,19 +3,10 @@ import { findPageId } from "@open-pencil/core/io";
 
 /**
  * 画布工具来自编辑器，内部会读 figma.currentPage。
- * HTTP 不保留这一次调用的页面，所以读页必须带 page_id，新建图层必须带 parent_id。
+ * HTTP 不保留这一次调用的页面，所以调用时读页要带 page_id，新建图层要带 parent_id。
+ * 这里负责在调用前把当前页切对、把参数摆好，调用后再把结果收一收。
+ * 参数说明见 ../definitions/canvas.ts。
  */
-
-const PAGE_FIELD = {
-  type: "string",
-  description: "页面节点 ID。服务不记住当前页，每次调用都要带上。",
-} as const;
-
-const PARENT_FIELD = {
-  type: "string",
-  description:
-    "父节点 ID，可以是页面，也可以是页面里的容器。服务不记住当前页。",
-} as const;
 
 const READS_PAGE = new Set([
   "find_nodes",
@@ -33,68 +24,6 @@ const NEEDS_PARENT = new Set([
   "render",
   "create_instance",
 ]);
-
-const DESCRIPTIONS: Record<string, string> = {
-  list_pages: "列出设计稿里的全部页面，返回每页的 id 和 name。没有当前页。",
-  get_page_tree:
-    "读取页面或节点的层级，只含 id、type、name、尺寸，文本节点带文字。传 page_id 读整页；传 root_id 只读该节点及其子树。不传 root_id 时必须传 page_id。可用 depth、node_types 缩小结果。节点详情用 get_node。",
-  find_nodes: "在指定页面里按名称和类型查找节点。必须传 page_id。",
-  page_bounds: "计算指定页面上全部顶层对象的包围盒。必须传 page_id。",
-  export_svg:
-    "把节点导出成 SVG 字符串。传 ids 导出这些节点；不传 ids 时必须传 page_id，导出该页全部顶层节点。",
-  export_png:
-    "把节点导出成 PNG，用来肉眼核对画稿。传 ids 导出这些节点；不传 ids 时必须传 page_id，导出该页全部顶层节点。图片在 image 内容里返回，文字里是宽、高、缩放和字节数。",
-  create_instance:
-    "创建一个组件实例。必须传 parent_id，指定放在哪个页面或容器里。",
-};
-
-export function scopeDescription(
-  name: string,
-  description: string | undefined
-): string | undefined {
-  return DESCRIPTIONS[name] ?? description;
-}
-
-export function scopeInputSchema(
-  name: string,
-  schema: Record<string, unknown>
-): Record<string, unknown> {
-  if (name === "find_nodes" || name === "page_bounds") {
-    return withField(schema, "page_id", PAGE_FIELD, true);
-  }
-  if (name === "get_page_tree") {
-    return withField(
-      schema,
-      "page_id",
-      {
-        ...PAGE_FIELD,
-        description: "页面节点 ID。不传 root_id 时必填。服务不记住当前页。",
-      },
-      false
-    );
-  }
-  if (name === "export_svg" || name === "export_png") {
-    const described = patchProperty(
-      schema,
-      "ids",
-      "要导出的节点 ID。不传则必须同时传 page_id，导出该页全部顶层节点。"
-    );
-    return withField(
-      described,
-      "page_id",
-      {
-        ...PAGE_FIELD,
-        description:
-          "页面节点 ID。不传 ids 时必填，导出该页全部顶层节点。服务不记住当前页。",
-      },
-      false
-    );
-  }
-  if (NEEDS_PARENT.has(name)) {
-    return withField(schema, "parent_id", PARENT_FIELD, name !== "render");
-  }
-  return schema;
-}
 
 export async function prepareScope(
   figma: FigmaAPI,
@@ -154,64 +83,6 @@ export function scopeResult(name: string, result: unknown): unknown {
   if (Array.isArray(result)) return result;
   const { current: _current, ...pages } = result as Record<string, unknown>;
   return pages;
-}
-
-function schemaProperties(
-  schema: Record<string, unknown>
-): Record<string, unknown> {
-  const properties = schema.properties;
-  if (
-    properties &&
-    typeof properties === "object" &&
-    !Array.isArray(properties)
-  ) {
-    return { ...(properties as Record<string, unknown>) };
-  }
-  return {};
-}
-
-function schemaRequired(schema: Record<string, unknown>): string[] {
-  return Array.isArray(schema.required)
-    ? schema.required.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
-function withField(
-  schema: Record<string, unknown>,
-  name: string,
-  field: { type: string; description: string },
-  required: boolean
-): Record<string, unknown> {
-  const properties = schemaProperties(schema);
-  const existing = properties[name];
-  properties[name] =
-    existing && typeof existing === "object" && !Array.isArray(existing)
-      ? {
-          ...(existing as Record<string, unknown>),
-          description: field.description,
-        }
-      : { ...field };
-  const requiredNames = new Set(schemaRequired(schema));
-  if (required) requiredNames.add(name);
-  return {
-    ...schema,
-    type: "object",
-    properties,
-    required: [...requiredNames],
-  };
-}
-
-function patchProperty(
-  schema: Record<string, unknown>,
-  name: string,
-  description: string
-): Record<string, unknown> {
-  const properties = schemaProperties(schema);
-  const existing = properties[name];
-  if (!existing || typeof existing !== "object" || Array.isArray(existing))
-    return schema;
-  properties[name] = { ...(existing as Record<string, unknown>), description };
-  return { ...schema, properties };
 }
 
 function takeString(args: Record<string, unknown>, key: string): string {

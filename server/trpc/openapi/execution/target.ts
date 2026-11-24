@@ -1,7 +1,7 @@
-import { HttpError } from "../http-error";
-import type { AuthUser } from "../auth/session";
-import { prisma } from "../db";
-import { designObjectKey } from "../storage";
+import { HttpError } from "../../http-error";
+import type { AuthUser } from "../../auth/session";
+import { prisma } from "../../db";
+import { designObjectKey } from "../../storage";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -25,45 +25,6 @@ export type McpDesign = {
   objectKey: string;
   byteSize: number | null;
 };
-
-const DOC_PARAM_PROPERTIES = {
-  docId: {
-    type: "string",
-    format: "uuid",
-    description: "设计稿 ID（UUID）。稿不存在时与 docName 一起创建。",
-  },
-  docName: {
-    type: "string",
-    description: "设计稿名称。稿不存在时用于创建。",
-  },
-} as const;
-
-/** 画稿工具的 JSON Schema 加上 docId、docName，调用时放在请求体里。 */
-export function withDocParams(
-  schema: Record<string, unknown>
-): Record<string, unknown> {
-  const properties = {
-    ...(schema.properties &&
-    typeof schema.properties === "object" &&
-    !Array.isArray(schema.properties)
-      ? schema.properties
-      : {}),
-    ...DOC_PARAM_PROPERTIES,
-  };
-  const required = new Set(
-    Array.isArray(schema.required)
-      ? schema.required.filter((item): item is string => typeof item === "string")
-      : []
-  );
-  required.add("docId");
-  required.add("docName");
-  return {
-    ...schema,
-    type: "object",
-    properties,
-    required: [...required],
-  };
-}
 
 /** 从工具参数里取出设计稿身份，剩下的才交给画稿工具。 */
 export function takeDocParams(args: Record<string, unknown>): {

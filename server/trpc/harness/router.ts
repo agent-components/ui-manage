@@ -5,7 +5,7 @@ export const harnessRouter = router({
     menus: [{ key: "designs", label: "设计文件", path: "/designs" }],
   })),
   tools: publicProcedure.query(async () => {
-    const { listHarnessTools } = await import("../openapi/catalog");
+    const { listHarnessTools } = await import("../openapi/definitions");
     return { tools: listHarnessTools() };
   }),
 });
